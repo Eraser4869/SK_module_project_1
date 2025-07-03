@@ -1,3 +1,11 @@
 .venv
+*.yaml
+*.env
+*.jpg
+*.png
+*.csv
 
-.env
+runs/
+runs2/
+runs3/
+

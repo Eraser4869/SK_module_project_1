@@ -16,13 +16,13 @@ if __name__=="__main__":
         device="0", #GPU 사용
         project="runs/scratch", #결과 저장
         name="yolov8_scratch",  #실험별 세부 폴더
-        exist_ok=True
+        exist_ok=True           #폴더 존재 시 에러 무시
     )
 
 
     #best.pt 
     #ultralytics v8는 .pt로 저장한 뒤 불러올 수 있다.
     best_pt = "runs/scratch/yolov8_scratch/weights/best.pt"
-    model_scratch = YOLO(best_pt).model  # nn.Module 추출
+    #model_scratch = YOLO(best_pt).model  # nn.Module 추출
 
 
