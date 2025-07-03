@@ -14,6 +14,7 @@ import os
 from typing import Dict, List, Tuple, Optional
 from difflib import SequenceMatcher  # 문자열 유사도 계산용 (기본 매칭에서 사용)
 
+
 # AI 라이브러리 import (설치 필요: pip install sentence-transformers torch)
 # try-except 구문을 사용하여 라이브러리 설치 여부 확인
 try:
@@ -48,7 +49,7 @@ class SmartRecipeClassifier:
         # AI 모델 초기화 (사용 가능한 경우에만)
         if self.use_ai:
             self._initialize_ai_matcher()
-        else: #이거야?
+        else:
             print("기본 매칭 모드로 실행됩니다.")
     
 
@@ -91,7 +92,7 @@ class SmartRecipeClassifier:
 
         # 식품명 리스트 생성 (DB + 기본 재료)
         # list() 함수로 pandas Index를 일반 리스트로 변환
-        self.food_items = list(self.nutrition_db.index) + list(self.fallback_nutrition.keys())  #이거야?
+        self.food_items = list(self.nutrition_db.index) + list(self.fallback_nutrition.keys())
         
         # 임베딩 로드 또는 새로 생성
         self._load_or_create_embeddings()
@@ -140,7 +141,6 @@ class SmartRecipeClassifier:
     
 
 
-# 이거야!
     def _create_fallback_nutrition(self) -> Dict[str, Dict]:
         # 기본 영양소 데이터를 정의하는 비상용 메서드
         # AI가 매칭하지 못하거나 DB에 없는 재료들을 위한 백업 데이터
@@ -342,7 +342,7 @@ class SmartRecipeClassifier:
         return '물', best_similarity, self.fallback_nutrition['물']
 
 
-#이거야
+
     def find_best_match_basic(self, ingredient_name: str) -> Tuple[str, float, Dict]:
         # 기본 문자열 매칭을 수행하는 메서드 (AI 미사용시)
         # 단순한 문자열 포함 관계와 유사도로 매칭
@@ -397,8 +397,6 @@ class SmartRecipeClassifier:
             nutrition = self.nutrition_db.loc[item_name].to_dict()
             return item_name, similarity, nutrition
         
-
-        # 이거야
         # 2순위: Fallback 데이터에서 확인
         if item_name in self.fallback_nutrition:
             return item_name, similarity, self.fallback_nutrition[item_name]
@@ -418,12 +416,11 @@ class SmartRecipeClassifier:
             # AI 매칭 사용
             return self.find_best_match_ai(ingredient_name)
         else:
-            # 이거야
             # 기본 문자열 매칭 사용
             return self.find_best_match_basic(ingredient_name)
     
 
-    '''지우려면 위의 _create_unit_conversion 메서드 포함 사용된거 다 '''
+
     def convert_to_grams(self, amount: float, unit: str, ingredient_name: str = '') -> float:
         # 다양한 단위를 그램으로 변환하는 메서드
         # amount: 양 (숫자)
@@ -751,6 +748,7 @@ def main():
     
     # 테스트용 레시피 데이터 정의
     # 다양한 재료명과 단위를 포함하여 AI 매칭 성능 테스트
+
     test_recipes = {
         # 테스트 1
         "치킨 샐러드": {
