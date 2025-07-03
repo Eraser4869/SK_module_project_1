@@ -4,8 +4,8 @@
 *.jpg
 *.png
 *.csv
-
-runs/
+run/
+runs1/
 runs2/
 runs3/
 

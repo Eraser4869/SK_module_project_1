@@ -16,7 +16,7 @@ if __name__=="__main__":
         imgsz=640,
         batch=16,
         device="0",                 # GPU 사용
-        project="runs3/scratch",    # 결과 저장
+        project="src/back2/food/scratch",    # 결과 저장
         name="yolov8_scratch",      # 실험별 세부 폴더
         exist_ok=True,               # 폴더 존재 시 에러 무시
         augment=True,                # 데이터 증강 
