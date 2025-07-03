@@ -44,12 +44,19 @@ class IngredientDetector:
                 all_labels.append([])   #오류가 난 경우 빈 리스트를 추가 후 계속 진행
         return all_labels
     #JSON 변환 메서드
-    def to_json(self, image_paths: Union[str, List[str]]) -> str: 
+    def to_json(self, image_input: Union[str, List[str], Dict[str, List[str]]]) -> str: 
         """
+        이미지는 단일 객체, 리스트, 딕셔너리 형태로 반환
         classify_ingredients 결과를 JSON 형식으로 반환
         반환값: JSON 문자열
         """
         try:
+            if isinstance(image_input,dict):    #입력이 딕셔너리면
+                image_paths = image_input.get("이미지",[])  #이미지 키 로 값 꺼내오기. 없으면 공리스트 반환
+            else:
+                image_paths = image_input
+
+
             all_labels = self.classify_ingredients(image_paths) # 감지 결과 가져오기 
             return json.dumps({"results": all_labels}, ensure_ascii=False, indent=2)    # 한글은 없지만 한글이 안깨지게 설정. 들여쓰기까지(가독성)
         
