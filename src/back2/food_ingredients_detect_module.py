@@ -21,6 +21,8 @@ class IngredientDetector:
             self.class_names = self.model.names  # 클래스 ID와 이름 매핑 딕셔너리 (예: {0: 'egg', 1: 'tomato'})
         except FileNotFoundError as e:
             print('모델 파일을 찾을 수 없습니다. 모델의 경로를 다시 확인해주세요.')
+        except Exception as e:
+            print(f'에러 발생: {e}')
         # OpenAI 클라이언트 준비
         load_dotenv()
         OPEN_API_KEY = os.getenv('OPEN_API_KEY')
@@ -44,17 +46,27 @@ class IngredientDetector:
         for i, img_path in enumerate(image_paths):    # 이미지의 경로
             try:
                 result = self.model(img_path)[0]  # YOLO 감지 결과
-
                 labels = [] # 현재 이미지의 식재료를 저장하는 리스트
-
                 confidence_threshold = 0.8  # 이 값 이하이면 신뢰도가 낮다고 판단
                 low_confidence_detected = False
 
                 # YOLO가 탐지에 실패했을 시에 AI 사용
                 if result.boxes is None or len(result.boxes) == 0:
-                    #print(f'{i}번째 이미지에서는 객체를 감지하지 못했습니다. AI를 사용합니다.')    #디버깅용
+                    #print(f'{i}번째 이미지에서는 객체를 감지하지 못했습니다. AI를 사용합니다.')
                     fallback_labels = self.detect_with_ai(img_path)
-                    all_labels.append(fallback_labels)  # 감지 실패 시 빈 리스트 추가
+
+                    # 중복 처리, all_labels와 비교 후 새로운 값만 추가
+                    flattened=[]
+                    for item in fallback_labels:
+                        if isinstance(item, list):
+                            flattened.extend(item)
+                        else:
+                            flattened.append(item)
+                    # all_labels에 존재하는 전체 라벨 flatten
+                    existing_labels = set(label for sublist in all_labels for label in sublist) # all_labels의 리스트 요소의 요소들을 추가
+                    # 중복 제거 및 새 항목 추가
+                    new_labels = [label for label in set(flattened) if label not in existing_labels]
+                    all_labels.append(new_labels if new_labels else []) # new_labels가 비어 있지 않으면 추가, 비어있으면 [] 추가
                     continue  # 다음 이미지로 이동
                 
                 # YOLO의 신뢰도가 낮으면 AI 사용
@@ -66,15 +78,26 @@ class IngredientDetector:
                         labels.append(label)    # 이름을 리스트에 추가
                     else:
                         low_confidence_detected = True # 신뢰도 낮은 객체 있음
-                    
-                    if labels:
-                        all_labels.append(list(set(labels)))    # 현재 이미지 결과를 전체 리스트에 추가(중복 제거)
+                # label이 있을 시
+                if labels:
+                    all_labels.append(list(set(labels)))    # 현재 이미지 결과를 전체 리스트에 추가(중복 제거)
+                # 신뢰도가 낮거나 객체 미탐지 시
+                elif low_confidence_detected or result.boxes: 
+                    fallback_labels = self.detect_with_ai(img_path)
+                    # 위와 같은 방식으로 중복 제거
+                    flattened = []
+                    for item in fallback_labels:
+                        if isinstance(item, list):
+                            flattened.extend(item)  # 리스트 안의 요소들을 꺼내서 추가
+                        else:
+                            flattened.append(item)  # 문자열이면 그대로 추가
+                    existing_labels = set(label for sublist in all_labels for label in sublist)
+                    new_labels = [label for label in set(flattened) if label not in existing_labels]
+                    all_labels.append(new_labels if new_labels else []) # new_labels가 비어 있지 않으면 추가, 비어있으면 [] 추가
 
-                    elif low_confidence_detected or result.boxes: # 신뢰도가 낮거나 객체 미탐지 시
-                        fallback_labels = self.detect_with_ai(img_path)
-                        all_labels.append(fallback_labels)
-                    else:   # 안전장치 YOLO, GPT 둘 다 아무런 결과를 내지 못했을 때 공리스트 반환
-                        all_labels.append([])
+                    # 안전장치 YOLO, GPT 둘 다 아무런 결과를 내지 못했을 때 공리스트 반환
+                else:  
+                    all_labels.append([])
                 
             except Exception as e:
                 print(f'!!!에러 발생!!! {i}번째 이미지를 처리 중 오류가 발생했습니다. 오류: {e}')
@@ -151,15 +174,14 @@ class IngredientDetector:
             return json.dumps({"error": str(e)}, ensure_ascii=False, indent=2)
         
         
-#main파일(디버깅용)
+#main파일
 
 def main():
     yolo_model_path = "C:/Users/choyk/Documents/GitHub/SK_module_project_1/src/back2/runs/food_ingredient_fresh/weights/best.pt"   #실제로는 환경변수 사용(env파일)
-    test_image_path = [".jpg"]
+    test_image_path = {"이미지": ['이미지 경로']}
     detector = IngredientDetector(yolo_model_path)
-    detector.to_json(test_image_path)
-    #print(detector.to_json(test_image_path))   #디버깅용
-
+    #detector.to_json(test_image_path)
+    print(detector.to_json(test_image_path))
 
 
 if __name__=="__main__":
