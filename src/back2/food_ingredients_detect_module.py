@@ -3,10 +3,14 @@ import base64                               # 이미지 인코딩 및 디코딩
 import requests                             # AI 사용
 import os                                   # API 키 저장
 import mimetypes                            # 이미지 파일 형식 통합
+import tempfile                             # 임시 파일 생성(임시 이미지 파일 경로)
 from dotenv import load_dotenv              # 키 불러오기
 from ultralytics import YOLO                # YOLOv8 모델을 불러오기 위한 라이브러리
 from typing import List, Dict, Union        # 타입 힌트를 위한 모듈
 from openai import OpenAI                   # OpenAI 사용
+from PIL import Image                       # Base64 --> PIL
+from io import BytesIO
+
 
 
 class IngredientDetector:
@@ -21,31 +25,32 @@ class IngredientDetector:
             self.class_names = self.model.names  # 클래스 ID와 이름 매핑 딕셔너리 (예: {0: 'egg', 1: 'tomato'})
         except FileNotFoundError as e:
             print('모델 파일을 찾을 수 없습니다. 모델의 경로를 다시 확인해주세요.')
-        except Exception as e:
-            print(f'에러 발생: {e}')
         # OpenAI 클라이언트 준비
         load_dotenv()
         OPEN_API_KEY = os.getenv('OPEN_API_KEY')
         self.openai_client = OpenAI(api_key=OPEN_API_KEY)
 
     # 식재료 분류 메서드
-    def classify_ingredients(self, image_paths: Union[str, List[str]]) -> List[Dict[str, int]]:
+    def classify_ingredients(self, image_dicts: List[dict]) -> List[Dict[str, int]]:
         """
-        image_path: 하나 이상의 이미지 경로를 받음
-        union[str, List[str]]: 문자열 하나 또는 문자열 리스트를 허용. 반환 타입 -> str
-        반환값: [{'tomato': 2, 'egg': 1}, {'onion': 3}, ...] 등 각 이미지마다 감지된 식재료 이름과 개수를 담은 딕셔너리 리스트
-
+        image_path: base64로 변환된 이미지를 받음
+        이미지에 포함된 식재료 리스트 반환
         """
-        if isinstance(image_paths, str):
-            # 단일 문자열이면 리스트로 변환하여 일관된 처리
-            image_paths = [image_paths]
+        
         # 모든 이미지의 감지 결과를 저장할 리스트
         all_labels = []
-
-        # 각 이미지에 대한 결과 반복
-        for i, img_path in enumerate(image_paths):    # 이미지의 경로
+        # 이미지를 전달하기 위한 검사
+        for i, image_dict in enumerate(image_dicts):
             try:
-                result = self.model(img_path)[0]  # YOLO 감지 결과
+                img = self.dict_to_pil_image(image_dict)
+                if img is None:
+                    all_labels.append([])
+                    continue
+                # PIL --> 임시 파일 경로
+                temp_path = self.pil_to_temp_path(img)
+
+                # YOLO 모델 추론
+                result = self.model(temp_path)[0]  # YOLO 감지 결과
                 labels = [] # 현재 이미지의 식재료를 저장하는 리스트
                 confidence_threshold = 0.8  # 이 값 이하이면 신뢰도가 낮다고 판단
                 low_confidence_detected = False
@@ -53,7 +58,7 @@ class IngredientDetector:
                 # YOLO가 탐지에 실패했을 시에 AI 사용
                 if result.boxes is None or len(result.boxes) == 0:
                     #print(f'{i}번째 이미지에서는 객체를 감지하지 못했습니다. AI를 사용합니다.')
-                    fallback_labels = self.detect_with_ai(img_path)
+                    fallback_labels = self.detect_with_ai(temp_path)
 
                     # 중복 처리, all_labels와 비교 후 새로운 값만 추가
                     flattened=[]
@@ -83,7 +88,7 @@ class IngredientDetector:
                     all_labels.append(list(set(labels)))    # 현재 이미지 결과를 전체 리스트에 추가(중복 제거)
                 # 신뢰도가 낮거나 객체 미탐지 시
                 elif low_confidence_detected or result.boxes: 
-                    fallback_labels = self.detect_with_ai(img_path)
+                    fallback_labels = self.detect_with_ai(temp_path)
                     # 위와 같은 방식으로 중복 제거
                     flattened = []
                     for item in fallback_labels:
@@ -102,6 +107,12 @@ class IngredientDetector:
             except Exception as e:
                 print(f'!!!에러 발생!!! {i}번째 이미지를 처리 중 오류가 발생했습니다. 오류: {e}')
                 all_labels.append([])   # 오류가 난 경우 빈 리스트를 추가 후 계속 진행
+            #임시 파일 경로 삭제
+            finally:
+                try:
+                    os.remove(temp_path)
+                except Exception as e:
+                    print(f'에러 발생!! 임시 파일 삭제 실패: {e}')
         return all_labels
     
     # AI를 활용한 보조 탐지 메서드
@@ -151,37 +162,70 @@ class IngredientDetector:
         except Exception as e:
             print(f'GPT 문제 발생: {e}')
             return []
+        
+    # base64 --> PIL 변경
+    def dict_to_pil_image(self, image_dict:dict) -> Image.Image:
+        try:
+            b64_data = image_dict.get("data")
+            if not b64_data:    # 데이터 필드가 비었을 시 에러
+                raise ValueError("data 필드가 비어 있습니다.")
+            
+            # data:image/png;base64,... 형태일 경우 MIME 프리픽스 제거
+            if b64_data.startswith("data:image"):
+                b64_data = b64_data.split(",")[1]
+            img_data = base64.b64decode(b64_data)
+            image = Image.open(BytesIO(img_data))
+            image.load()    # 오류 방지. 명시적 이미지 로딩
+            return image
+        except Exception as e:
+            print(f'[dict_to_pil_image] base64 디코딩 또는 이미지 로딩 오류: {e}')
+            return None
+
+    # 임시 경로 생성 메서드: dict 형대로 YOLO에 넣을 수 없기 때문에 
+    def pil_to_temp_path(self, pil_img) -> str:
+        format = pil_img.format if pil_img.format else "PNG"    # 기본 값
+
+        extension = f".{format.lower()}"
+
+        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=extension)
+        pil_img.save(temp_file.name, format=format)
+        return temp_file.name
 
     #JSON 변환 메서드
-    def to_json(self, images: Union[str, List[str], Dict[str, List[str]]]) -> str: 
+    def to_json(self, image_dict: List[dict]) -> str: 
         """
         이미지는 단일 객체, 리스트, 딕셔너리 형태로 반환
         classify_ingredients 결과를 JSON 형식으로 반환
         반환값: JSON 문자열
         """
         try:
-            if isinstance(images,dict):    #입력이 딕셔너리면
-                image_paths = images.get("이미지",[])  #이미지 키 로 값 꺼내오기. 없으면 공리스트 반환
-            else:
-                image_paths = images
-
-
-            all_labels = self.classify_ingredients(image_paths) # 감지 결과 가져오기 
-            return json.dumps({"results": all_labels}, ensure_ascii=False, indent=2)    # 한글은 없지만 한글이 안깨지게 설정. 들여쓰기까지(가독성)
+            all_labels = self.classify_ingredients(image_dict) # 감지 결과 가져오기 
+            return json.dumps({"results": all_labels}, ensure_ascii=False, indent=2)    # 한글이 안깨지게 설정. 들여쓰기까지(가독성)
         
         except Exception as e:
             print(f'to_json 오류 발생: {e}')
             return json.dumps({"error": str(e)}, ensure_ascii=False, indent=2)
         
         
-#main파일
+#main파일(디버깅, 사용 방식)
+def pil_image_to_dict(img):
+    buffered = BytesIO()
+    img.save(buffered, format="PNG")
+    img_str = base64.b64encode(buffered.getvalue()).decode()
+    return {
+        "mode": img.mode,
+        "size": img.size,
+        "data": img_str
+    }
 
 def main():
-    yolo_model_path = "C:/Users/choyk/Documents/GitHub/SK_module_project_1/src/back2/runs/food_ingredient_fresh/weights/best.pt"   #실제로는 환경변수 사용(env파일)
-    test_image_path = {"이미지": ['이미지 경로']}
+    yolo_model_path = "SK_module_project_1/src/back2/runs/food_ingredient_fresh/weights/best.pt"   #실제로는 환경변수 사용(env파일 등)
+    img = Image.open("cc.jpg")
+    img_dict = pil_image_to_dict(img)
     detector = IngredientDetector(yolo_model_path)
     #detector.to_json(test_image_path)
-    print(detector.to_json(test_image_path))
+    print(detector.to_json([img_dict]))
+
 
 
 if __name__=="__main__":
