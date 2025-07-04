@@ -52,7 +52,7 @@ class IngredientDetector:
 
                 # YOLO가 탐지에 실패했을 시에 AI 사용
                 if result.boxes is None or len(result.boxes) == 0:
-                    print(f'{i}번째 이미지에서는 객체를 감지하지 못했습니다. AI를 사용합니다.')
+                    #print(f'{i}번째 이미지에서는 객체를 감지하지 못했습니다. AI를 사용합니다.')    #디버깅용
                     fallback_labels = self.detect_with_ai(img_path)
                     all_labels.append(fallback_labels)  # 감지 실패 시 빈 리스트 추가
                     continue  # 다음 이미지로 이동
@@ -158,7 +158,7 @@ def main():
     test_image_path = [".jpg"]
     detector = IngredientDetector(yolo_model_path)
     detector.to_json(test_image_path)
-    #print(detector.to_json(test_image_path))
+    #print(detector.to_json(test_image_path))   #디버깅용
 
 
 
