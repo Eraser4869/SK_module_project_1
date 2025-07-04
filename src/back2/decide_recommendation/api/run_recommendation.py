@@ -1,8 +1,7 @@
 import os
 import pandas as pd
 import json
-from simple_classifier_module import SimpleRecipeClassifier
-from ingredient_utils import extract_ingredient_info, extract_ingredient_info_light
+from src.back2.decide_recommendation.api.ingredient_utils import extract_ingredient_info, extract_ingredient_info_light
 
 def is_match(보유: str, 레시피_아이템: str) -> bool:
     return 보유.strip() == 레시피_아이템.strip()
@@ -31,13 +30,6 @@ def run_recipe_recommendation(보유_재료: list):
             any(is_match(보유.strip(), r_item) for r_item in 레시피_재료)
             for 보유 in 보유_재료
         )
-
-        print(f"[DEBUG] 요리명: {row['요리이름']}")
-        print(f"[DEBUG] 레시피 재료: {레시피_재료}")
-        print(f"[DEBUG] 보유 재료: {보유_재료}")
-        print(f"[DEBUG] 포함 여부: {is_In}")
-        print("----")
-
         if is_In:
             # 4-1. 재료_JSON이 존재하면 사용
             if pd.notnull(row["재료_JSON"]):
@@ -59,7 +51,7 @@ def run_recipe_recommendation(보유_재료: list):
         print(f"[INFO] {len(updated_indices)}건 재료_JSON 생성 및 저장 완료 ✅")
 
     print(f"[DEBUG] 총 추천 대상 레시피 수: {len(recipe_dict)}")
-
+    print(recipe_dict)
     return recipe_dict
 
 # ✅ 테스트용 메인
