@@ -101,8 +101,6 @@ class RecipeDataIntegrator:
         
         return diet_results
     
-
-    
     def _get_cooking_time_results(self, test_recipes: Dict, preferences: Dict) -> Dict:
         """조리시간 예측 모듈에서 결과 가져오기"""
         print("조리시간 예측 결과 수집 중...")
@@ -243,7 +241,7 @@ def example_usage():
     
     # 하드코딩된 테스트 레시피 데이터
     test_recipes = {
-        "떡볶이": {
+        "으르렁 떡볶이": {
             "재료": [
                 {"item": "쌀", "amount": 100, "unit": "g"},
                 {"item": "배추", "amount": 50, "unit": "g"},
@@ -254,9 +252,9 @@ def example_usage():
                 {"item": "설탕", "amount": 1, "unit": "큰술"}
             ]
         },
-        "파전": {
+        "김치전": {
             "재료": [
-                {"item": "밀가루", "amount": 200, "unit": "g"},
+                {"item": "김치", "amount": 200, "unit": "g"},
                 {"item": "파", "amount": 150, "unit": "g"}
             ],
             "조미료": [
@@ -268,7 +266,7 @@ def example_usage():
     
     # 하드코딩된 테스트 선호도
     preferences = {
-        "diet": [0, 0, 0, 0],    # 선호 없음
+        "diet": [0, 0, 0, 1],    # 선호 없음
         "time": [0, 0, 0],       # 선호 없음
         "difficulty": [0, 0, 0]  # 선호 없음
     }
@@ -276,14 +274,18 @@ def example_usage():
     # 통합기 초기화 및 실행
     integrator = RecipeDataIntegrator()
     result = integrator.integrate_recipe_data(test_recipes, preferences)
-    
+
     # 최종 통합 데이터 구조 출력
-    print("\n=== 최종 통합 데이터 구조 ===")
-    for recipe_name, data in result.items():
-        print(f"\n레시피: {recipe_name}")
-        print(f"  식단 분류: {data['diet_classifications']}")
-        print(f"  조리 정보: {data['cooking_info']}")
-        print(f"  영양 정보 존재: {'nutrition_info' in data and data['nutrition_info'] is not None}")
+    # print("\n=== 최종 통합 데이터 구조 ===")
+    # for recipe_name, data in result.items():
+    #    print(f"\n레시피: {recipe_name}")
+    #    print(f"  식단 분류: {data['diet_classifications']}")
+    #    print(f"  조리 정보: {data['cooking_info']}")
+    #    print(f"  영양 정보 존재: {'nutrition_info' in data and data['nutrition_info'] is not None}")
+    
+    return result
+
+
 
 
 if __name__ == "__main__":
