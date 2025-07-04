@@ -65,7 +65,7 @@ class IngredientDetector:
                         label = self.class_names[cls_id]    # 클래스 ID를 이름으로 변환(1 --> 사과 등)
                         labels.append(label)    # 이름을 리스트에 추가
                     else:
-                        low_confidence_count = True # 신뢰도 낮은 객체 있음
+                        low_confidence_detected = True # 신뢰도 낮은 객체 있음
                     
                     if labels:
                         all_labels.append(list(set(labels)))    # 현재 이미지 결과를 전체 리스트에 추가(중복 제거)
@@ -151,14 +151,14 @@ class IngredientDetector:
             return json.dumps({"error": str(e)}, ensure_ascii=False, indent=2)
         
         
-#main파일
+#main파일(디버깅용)
 
 def main():
     yolo_model_path = "C:/Users/choyk/Documents/GitHub/SK_module_project_1/src/back2/runs/food_ingredient_fresh/weights/best.pt"   #실제로는 환경변수 사용(env파일)
-    test_image_path = ["-00020_jpeg_jpg.rf.c8166a80d784fa696c5a0b2ecdac9b89.jpg"]
+    test_image_path = [".jpg"]
     detector = IngredientDetector(yolo_model_path)
-    #detector.to_json(test_image_path)
-    print(detector.to_json(test_image_path))
+    detector.to_json(test_image_path)
+    #print(detector.to_json(test_image_path))
 
 
 
