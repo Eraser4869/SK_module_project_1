@@ -10,7 +10,9 @@ import requests
 import random
 from typing import Dict, List, Tuple, Optional
 from datetime import datetime
-from ai_classifier_multi_agent import MultiAgentRecipeSystem  # 수정된 분류기 import
+
+# 첫 번째 코드의 멀티에이전트 시스템 import
+from ai_classifier_multi_agent import MultiAgentRecipeSystem  # 멀티에이전트 시스템 import
 
 
 
@@ -23,8 +25,8 @@ class RecipeRecommendationSystem:
         # nutrition_csv_path: 국가표준식품성분표 CSV 파일 경로
         # recipe_database_path: 레시피 데이터베이스 경로 (선택적)
         
-        # 기존 분류기 초기화 (국가표준식품성분표 사용)
-        self.classifier = MultiAgentRecipeSystem(nutrition_csv_path, use_ai=True)
+        # 멀티에이전트 시스템 초기화 (국가표준식품성분표 사용)
+        self.multi_agent_system = MultiAgentRecipeSystem(nutrition_csv_path, use_ai=True)
         
         # 레시피 데이터베이스 로드
         self.recipe_database = self._load_recipe_database(recipe_database_path)
@@ -45,12 +47,15 @@ class RecipeRecommendationSystem:
 
 
     def _load_recipe_database(self, database_path: str) -> List[Dict]:
+        
         # 레시피 데이터베이스 로드 메서드
         # 실제 환경에서는 외부 API나 DB에서 가져올 예정
         # 현재는 샘플 데이터 사용
         # 반환값: 레시피 딕셔너리 리스트
         
         # 임시 샘플 레시피 데이터베이스
+        # 국가표준식품성분표에 있는 재료명으로 구성
+
         sample_recipes = [
             {
                 "name": "닭가슴살 샐러드",
@@ -64,7 +69,7 @@ class RecipeRecommendationSystem:
                         {"item": "오이", "amount": 50, "unit": "g"}           # 국가표준: 오이로 매칭
                     ],
                     "조미료": [
-                        {"item": "올리브유", "amount": 1, "unit": "큰술"},     # 국가표준: 올리브유로 매칭
+                        {"item": "올리브오일", "amount": 1, "unit": "큰술"},     # 국가표준: 올리브오일로 매칭
                         {"item": "레몬", "amount": 1, "unit": "큰술"},         # 국가표준: 레몬으로 매칭 예상
                         {"item": "소금", "amount": 1, "unit": "조금"}          # 국가표준: 소금으로 매칭
                     ]
@@ -73,7 +78,7 @@ class RecipeRecommendationSystem:
                 "detailed_recipe": [
                     "1. 닭가슴살을 소금, 후추로 밑간하고 팬에 구워줍니다.",
                     "2. 상추와 채소들을 깨끗이 씻어 적당한 크기로 자릅니다.",
-                    "3. 올리브유와 레몬즙을 섞어 드레싱을 만듭니다.",
+                    "3. 올리브오일과 레몬즙을 섞어 드레싱을 만듭니다.",
                     "4. 모든 재료를 접시에 담고 드레싱을 뿌려 완성합니다."
                 ]
             },
@@ -89,7 +94,7 @@ class RecipeRecommendationSystem:
                         {"item": "견과류", "amount": 30, "unit": "g"}         # 국가표준: 견과류 카테고리에서 매칭
                     ],
                     "조미료": [
-                        {"item": "올리브유", "amount": 2, "unit": "큰술"},
+                        {"item": "올리브오일", "amount": 2, "unit": "큰술"},
                         {"item": "레몬", "amount": 1, "unit": "큰술"},
                         {"item": "소금", "amount": 1, "unit": "조금"}
                     ]
@@ -140,7 +145,7 @@ class RecipeRecommendationSystem:
                         {"item": "양파", "amount": 1, "unit": "개"}           # 국가표준: 양파로 매칭
                     ],
                     "조미료": [
-                        {"item": "올리브유", "amount": 2, "unit": "큰술"},
+                        {"item": "올리브오일", "amount": 2, "unit": "큰술"},
                         {"item": "소금", "amount": 1, "unit": "조금"},
                         {"item": "후추", "amount": 1, "unit": "조금"}
                     ]
@@ -167,7 +172,7 @@ class RecipeRecommendationSystem:
                     "조미료": [
                         {"item": "소금", "amount": 1, "unit": "큰술"},
                         {"item": "후추", "amount": 1, "unit": "작은술"},
-                        {"item": "올리브유", "amount": 2, "unit": "큰술"}
+                        {"item": "올리브오일", "amount": 2, "unit": "큰술"}
                     ]
                 },
                 "description": "고급 레스토랑 스타일 스테이크",
@@ -186,22 +191,22 @@ class RecipeRecommendationSystem:
         for i, recipe in enumerate(sample_recipes, 1):
             print(f"레시피 {i}/{len(sample_recipes)} 분석 중: {recipe['name']}")
             
-            # 분류기를 사용하여 레시피 분석
-            classification_result = self.classifier.classify_recipe(
+            # 멀티에이전트 시스템을 사용하여 레시피 분석
+            analysis_result = self.multi_agent_system.analyze_recipe(
                 recipe["name"], 
                 recipe["ingredients"]
             )
             
-            # 분류 결과를 레시피에 추가
+            # 분석 결과를 레시피에 추가
             recipe["diet_tags"] = {
-                "다이어트": classification_result["classifications"]["다이어트"],
-                "저탄고지": classification_result["classifications"]["저탄고지"], 
-                "저염": classification_result["classifications"]["저염"],
-                "채식": classification_result["classifications"]["채식"]
+                "다이어트": analysis_result["classifications"]["다이어트"],
+                "저탄고지": analysis_result["classifications"]["저탄고지"], 
+                "저염": analysis_result["classifications"]["저염"],
+                "채식": analysis_result["classifications"]["채식"]
             }
             
             # 영양소 정보 추가 (국가표준식품성분표 컬럼명 사용)
-            recipe["nutrition_per_100g"] = classification_result["nutrition_result"]["nutrition_per_100g"]
+            recipe["nutrition_per_100g"] = analysis_result["nutrition_result"]["nutrition_per_100g"]
             
         print("레시피 분석 완료!")
         return sample_recipes
