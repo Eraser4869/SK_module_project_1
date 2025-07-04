@@ -23,15 +23,18 @@ def get_preferences_input():
     time_bools = [1 if st.session_state.get(f"time_{i}", False) else 0 for i in range(len(time_choices))]
     diff_bools = [1 if st.session_state.get(f"diff_{i}", False) else 0 for i in range(len(difficulty_choices))]
 
-    return [diet_bools, time_bools, diff_bools]
-
+    return {
+        "diet": diet_bools,
+        "time": time_bools,
+        "difficulty": diff_bools
+    }
 
 # 사용 예시
 ingredients = get_ingredients_input()
 preferences = get_preferences_input()
 
 if ingredients:
-    # 예시 출력
-    st.write(json.dumps(preferences))
+    # 원하는 형태로 출력
+    st.write(json.dumps({"preferences": preferences}, ensure_ascii=False))
     # ex) requests.post(url, json={"ingredients": ingredients, "preferences": preferences})
     pass
