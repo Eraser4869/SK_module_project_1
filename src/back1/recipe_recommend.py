@@ -5,7 +5,7 @@ import random
 from typing import Dict, List, Tuple
 
 from recipe_data_integrator import example_usage
-
+from crawling import food_info
 
 class RecipeRecommender:
     """
@@ -14,9 +14,10 @@ class RecipeRecommender:
     """
     
     def __init__(self, nutrition_csv_path: str = None):
-        """초기화 메서드 - 통합 데이터 방식에서는 인수가 필요 없음"""
+        """초기화 메서드"""
         pass
     
+
     def get_recommendations(self, integrated_data: Dict, 
                           recommendation_type: str = "random", 
                           top_n: int = 3) -> List[Tuple[str, Dict]]:
@@ -63,6 +64,9 @@ class RecipeRecommender:
             random.shuffle(recipes)
             return recipes[:top_n]
     
+
+
+
     def display_recipe_summary(self, recipe_name: str, recipe_data: Dict, rank: int):
         """레시피 요약 정보 출력"""
         print(f"\n추천 레시피 #{rank}")
@@ -90,6 +94,10 @@ class RecipeRecommender:
                 print(f"영양정보(100g당): {nutrition_per_100g.get('kcal', 0):.0f}kcal, "
                       f"단백질 {nutrition_per_100g.get('protein_g', 0):.1f}g")
     
+
+
+
+    # crawling
     def display_detailed_recipe(self, recipe_name: str, recipe_data: Dict):
         """상세 레시피 정보 출력"""
         print(f"\n상세 정보: {recipe_name}")
@@ -123,7 +131,18 @@ class RecipeRecommender:
             print(f"  {diet_type}: {status}")
             if reason:
                 print(f"    이유: {reason}")
+
+
+        # 웹에서 가져오기        
+        print("example_usage() 함수 호출 중...")
+        detailed_recpie_web = food_info(recipe_name)
+
+        print(f"상세 레시피 가져오기 완료!\n")
+        print(f"{detailed_recpie_web}")
+
         
+
+        """
         # 조리 정보
         cooking_info = recipe_data.get('cooking_info', {})
         if cooking_info:
@@ -153,8 +172,11 @@ class RecipeRecommender:
                 print(f"  100g당 칼로리: {nutrition_per_100g.get('kcal', 0):.0f}kcal")
                 print(f"  100g당 단백질: {nutrition_per_100g.get('protein_g', 0):.1f}g")
                 print(f"  100g당 탄수화물: {nutrition_per_100g.get('carb_g', 0):.1f}g")
-                print(f"  100g당 지방: {nutrition_per_100g.get('fat_g', 0):.1f}g")
+                print(f"  100g당 지방: {nutrition_per_100g.get('fat_g', 0):.1f}g")"""
     
+
+
+
     def run_recommendation_session(self, integrated_data: Dict, user_preferences: Dict = None):
         """
         통합된 데이터로 추천 세션 실행
@@ -229,9 +251,10 @@ def main():
         # recipe_data_integrator.py의 example_usage()에서 통합 데이터 가져오기
         print("example_usage() 함수 호출 중...")
         integrated_data = example_usage()
-        
+
         print(f"통합 데이터 가져오기 완료!")
         print(f"통합 데이터 타입: {type(integrated_data)}")
+        
         
         if not integrated_data:
             print("오류: 통합 데이터가 비어있습니다.")

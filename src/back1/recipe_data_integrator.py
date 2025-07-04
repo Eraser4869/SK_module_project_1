@@ -8,6 +8,7 @@ from typing import Dict, List, Any
 from ai_classifier_multi_agent import MultiAgentRecipeSystem
 from cooking_time_model import parse_json_and_predict
 
+
 class RecipeDataIntegrator:
     """
     레시피 데이터 통합 클래스
@@ -241,21 +242,21 @@ def example_usage():
     
     # 하드코딩된 테스트 레시피 데이터
     test_recipes = {
-        "으르렁 떡볶이": {
+        "잡채": {
             "재료": [
-                {"item": "쌀", "amount": 100, "unit": "g"},
-                {"item": "배추", "amount": 50, "unit": "g"},
-                {"item": "오뎅", "amount": 100, "unit": "g"}
+                {"item": "당근", "amount": 100, "unit": "g"},
+                {"item": "당면", "amount": 50, "unit": "g"},
+                {"item": "시금치", "amount": 100, "unit": "g"}
             ],
             "조미료": [
-                {"item": "고추장", "amount": 2, "unit": "큰술"},
+                {"item": "간장", "amount": 2, "unit": "큰술"},
                 {"item": "설탕", "amount": 1, "unit": "큰술"}
             ]
         },
-        "김치전": {
+        "미역국": {
             "재료": [
-                {"item": "김치", "amount": 200, "unit": "g"},
-                {"item": "파", "amount": 150, "unit": "g"}
+                {"item": "미역", "amount": 50, "unit": "g"},
+                {"item": "소고기", "amount": 100, "unit": "g"}
             ],
             "조미료": [
                 {"item": "간장", "amount": 3, "unit": "큰술"},
