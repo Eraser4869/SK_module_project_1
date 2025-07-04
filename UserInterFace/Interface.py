@@ -563,7 +563,6 @@ recipe_instructions = {
 
 with col_right:
     if st.session_state.analyzing_mode:
-        # 추천 레시피 바 대신 심플 텍스트 바
         st.markdown("""
         <div style="width:100%;padding:18px 0 18px 0;text-align:center;font-size:1.5em;font-weight:bold;border-bottom:1px solid #eee;background:rgba(255,255,255,0.7);">
         추천 레시피
