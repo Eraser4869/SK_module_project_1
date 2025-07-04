@@ -10,7 +10,9 @@ import requests
 import random
 from typing import Dict, List, Tuple, Optional
 from datetime import datetime
-from ai_classifier import SmartRecipeClassifier  # 수정된 분류기 import
+from ai_classifier_multi_agent import MultiAgentRecipeSystem  # 수정된 분류기 import
+
+
 
 class RecipeRecommendationSystem:
     # AI 기반 레시피 추천 시스템
@@ -22,7 +24,7 @@ class RecipeRecommendationSystem:
         # recipe_database_path: 레시피 데이터베이스 경로 (선택적)
         
         # 기존 분류기 초기화 (국가표준식품성분표 사용)
-        self.classifier = SmartRecipeClassifier(nutrition_csv_path, use_ai=True)
+        self.classifier = MultiAgentRecipeSystem(nutrition_csv_path, use_ai=True)
         
         # 레시피 데이터베이스 로드
         self.recipe_database = self._load_recipe_database(recipe_database_path)
@@ -40,6 +42,8 @@ class RecipeRecommendationSystem:
         print("레시피 추천 시스템이 준비되었습니다!")
         print("국가표준식품성분표 기반으로 정확한 영양소 분석을 제공합니다.")
     
+
+
     def _load_recipe_database(self, database_path: str) -> List[Dict]:
         # 레시피 데이터베이스 로드 메서드
         # 실제 환경에서는 외부 API나 DB에서 가져올 예정
@@ -47,7 +51,6 @@ class RecipeRecommendationSystem:
         # 반환값: 레시피 딕셔너리 리스트
         
         # 임시 샘플 레시피 데이터베이스
-        # 국가표준식품성분표에 있는 재료명으로 구성
         sample_recipes = [
             {
                 "name": "닭가슴살 샐러드",
@@ -212,17 +215,13 @@ class RecipeRecommendationSystem:
         print("국가표준식품성분표 기반으로 정확한 영양소 분석을 제공합니다.")
         
         preferences = {}
-        
-        # 식단 유형 선호도 입력
-        print("\n원하는 식단 유형을 선택하세요 (여러 개 선택 가능):")
-        diet_types = ["다이어트", "저탄고지", "저염", "채식"]
-        
-        for i, diet_type in enumerate(diet_types, 1):
-            print(f"{i}. {diet_type}")
-        
-        selected = input("번호를 입력하세요 (예: 1,3): ").strip()
         preferences["preferred_diets"] = []
         
+        # 식단 유형 선호도 설정. 원래는 데이터 가져오는 형식으로 해야함.
+        print("\n원하는 식단 유형을 선택하세요 (여러 개 선택 가능):")
+        diet_types = ["다이어트", "저탄고지", "저염", "채식"]
+        preferences["preferred_diets"] = []
+        selected = '1,3'
         if selected:
             try:
                 # 쉼표로 구분된 번호들을 파싱
@@ -230,16 +229,11 @@ class RecipeRecommendationSystem:
                 preferences["preferred_diets"] = [diet_types[i] for i in indices if 0 <= i < len(diet_types)]
                 print(f"선택된 식단: {', '.join(preferences['preferred_diets'])}")
             except:
-                print("잘못된 입력입니다. 모든 식단을 고려합니다.")
+                print("잘못된 입력. 식단 파싱 오류")
         
-        # 조리시간 선호도 입력
-        print("\n희망 조리시간을 선택하세요:")
-        print("1. 15분 이하 (간단)")
-        print("2. 30분 이하 (보통)")
-        print("3. 45분 이하 (정성)")
-        print("4. 상관없음")
-        
-        time_choice = input("번호를 입력하세요: ").strip()
+
+        # 사용자 선호 조리시간 여기로 가져오고
+        time_choice = 4
         time_limits = {
             "1": 15,
             "2": 30, 
@@ -248,14 +242,9 @@ class RecipeRecommendationSystem:
         }
         preferences["max_cooking_time"] = time_limits.get(time_choice, 999)
         
-        # 난이도 선호도 입력
-        print("\n희망 난이도를 선택하세요:")
-        print("1. 쉬움")
-        print("2. 보통")
-        print("3. 어려움") 
-        print("4. 상관없음")
-        
-        difficulty_choice = input("번호를 입력하세요: ").strip()
+
+        # 여기로 난이도 선로도 가져오기
+        difficulty_choice = "4"
         difficulty_map = {
             "1": ["쉬움"],
             "2": ["쉬움", "보통"],
@@ -266,8 +255,10 @@ class RecipeRecommendationSystem:
         
         # 현재 세션에 사용자 선호도 저장
         self.current_session["user_preferences"] = preferences
+        
         return preferences
     
+
     def calculate_recipe_score(self, recipe: Dict, preferences: Dict) -> float:
         # 레시피와 사용자 선호도의 매칭 점수 계산 메서드
         # 다양한 요소를 고려한 가중치 기반 점수 계산
@@ -297,6 +288,8 @@ class RecipeRecommendationSystem:
             time_score = 1.0 - (recipe["cooking_time"] / max_time) * 0.5
             score += 0.3 * time_score
         
+
+
         # 난이도 매칭 (가중치: 20%)
         allowed_difficulty = preferences.get("allowed_difficulty", ["쉬움", "보통", "어려움"])
         if recipe["difficulty"] in allowed_difficulty:
@@ -318,6 +311,9 @@ class RecipeRecommendationSystem:
         
         return min(score, 1.0)  # 최대 1.0점으로 제한
     
+
+
+
     def get_recommended_recipes(self, preferences: Dict) -> List[Tuple[Dict, float]]:
         # 사용자 선호도에 따른 레시피 추천 목록 생성 메서드
         # preferences: 사용자 선호도 딕셔너리
@@ -334,6 +330,8 @@ class RecipeRecommendationSystem:
         scored_recipes.sort(key=lambda x: x[1], reverse=True)
         
         return scored_recipes
+    
+
     
     def display_recipe_summary(self, recipe: Dict, score: float, rank: int):
         # 레시피 요약 정보 출력 메서드
@@ -363,6 +361,8 @@ class RecipeRecommendationSystem:
               f"탄수화물 {nutrition.get('carb_g', 0):.1f}g, "
               f"당류 {nutrition.get('당류', 0):.1f}g")  # 국가표준 컬럼명
     
+
+
     def get_recipe_image_url(self, recipe_name: str) -> str:
         # 레시피 이미지 URL 생성 메서드
         # 실제 환경에서는 AI 이미지 생성(DALL-E, Midjourney) 또는 웹 스크래핑 사용
@@ -382,6 +382,8 @@ class RecipeRecommendationSystem:
         
         return placeholder_images.get(recipe_name, "https://via.placeholder.com/400x300/CCCCCC/000000?text=Recipe+Image")
     
+
+
     def display_detailed_recipe(self, recipe: Dict):
         # 상세 레시피 정보 출력 메서드
         # recipe: 레시피 정보 딕셔너리
@@ -432,6 +434,8 @@ class RecipeRecommendationSystem:
         
         print(f"\n{'='*60}")
     
+
+
     def run_recommendation_session(self):
         # 추천 세션 실행 메서드
         # 사용자와의 대화형 인터페이스를 통해 전체 추천 프로세스 진행
@@ -479,18 +483,7 @@ class RecipeRecommendationSystem:
             if choice == "1":
                 # 상세 레시피 표시
                 self.display_detailed_recipe(recipe)
-                
-                # 만족도 확인
-                print("\n이 레시피가 마음에 드시나요?")
-                satisfied = input("만족하시면 'y' 또는 '네'를 입력하세요: ").strip().lower()
-                
-                if satisfied in ['y', 'yes', '네', '좋아요', '만족', 'ㅇ']:
-                    print("\n추천이 도움이 되어 기쁩니다! 맛있게 드세요!")
-                    print("이 레시피는 국가표준식품성분표를 기반으로 정확한 영양소 분석을 제공했습니다.")
-                    break
-                else:
-                    print("\n다른 레시피를 찾아보겠습니다.")
-                    current_index += 1
+                break
                     
             elif choice == "2":
                 print("\n⏭다음 추천 레시피로 넘어갑니다.")
@@ -515,130 +508,17 @@ class RecipeRecommendationSystem:
                     self.run_recommendation_session()  # 재귀 호출로 다시 시작
                 break
     
-    def get_cooking_time_estimate(self, recipe_data: Dict) -> int:
-        # 조리시간 추정 메서드 (다른 팀의 조리시간 분석 모듈 연동 예정)
+
+
+    def get_cooking_time_estimate(self) -> int:
+        # 조리시간 추정 메서드 (다른 조리시간 분석 모듈 연동 예정)
         # 현재는 간단한 휴리스틱 사용, 추후 AI 모델로 업그레이드 예정
         # recipe_data: 레시피 재료 정보 딕셔너리
         # 반환값: 예상 조리시간 (분 단위)
         
-        # 재료 개수에 따른 기본 시간 계산
-        ingredient_count = len(recipe_data.get("재료", [])) + len(recipe_data.get("조미료", []))
-        
-        # 재료 개수당 2분씩 기본 시간 할당
-        base_time = ingredient_count * 2
-        
-        # 복잡한 조리가 필요한 재료 확인
-        complex_ingredients = ["고기", "생선", "해산물", "닭", "소", "돼지", "연어"]
-        meat_cooking_time = 0
-        
-        total_weight = 0
-        for ingredient in recipe_data.get("재료", []):
-            item_name = ingredient.get("item", "").lower()
-            amount = ingredient.get("amount", 0)
-            
-            total_weight += amount
-            
-            # 복잡한 재료 확인 (고기류는 추가 조리시간 필요)
-            if any(complex_ing in item_name for complex_ing in complex_ingredients):
-                meat_cooking_time += 15  # 고기류 조리시간 추가
-        
-        # 총 중량에 따른 시간 조정
-        weight_time = 0
-        if total_weight > 500:  # 500g 이상
-            weight_time = 20
-        elif total_weight > 300:  # 300g 이상
-            weight_time = 10
-        elif total_weight > 150:  # 150g 이상
-            weight_time = 5
-        
-        # 총 조리시간 = 기본시간 + 고기조리시간 + 중량조정시간
-        total_time = base_time + meat_cooking_time + weight_time
-        
-        # 최소 10분, 최대 120분으로 제한
-        return min(max(total_time, 10), 120)
+        # 30분으로 임의 설정
+        return 30
     
-    def analyze_recipe_trends(self) -> Dict:
-        # 레시피 트렌드 분석 메서드
-        # 현재 데이터베이스의 레시피들을 분석하여 트렌드 정보 제공
-        # 반환값: 트렌드 분석 결과 딕셔너리
-        
-        trends = {
-            "diet_popularity": {},      # 식단별 인기도
-            "avg_cooking_time": 0,      # 평균 조리시간
-            "difficulty_distribution": {},  # 난이도 분포
-            "nutrition_averages": {}    # 평균 영양소
-        }
-        
-        # 식단별 인기도 계산
-        diet_counts = {"다이어트": 0, "저탄고지": 0, "저염": 0, "채식": 0}
-        total_cooking_time = 0
-        difficulty_counts = {"쉬움": 0, "보통": 0, "어려움": 0}
-        
-        nutrition_totals = {
-            "kcal": 0, "protein_g": 0, "carb_g": 0, "fat_g": 0,
-            "당류": 0, "총  식이섬유": 0, "sodium_mg": 0
-        }
-        
-        for recipe in self.recipe_database:
-            # 식단 태그 카운트
-            for diet_type, is_applicable in recipe["diet_tags"].items():
-                if is_applicable:
-                    diet_counts[diet_type] += 1
-            
-            # 조리시간 누적
-            total_cooking_time += recipe["cooking_time"]
-            
-            # 난이도 카운트
-            difficulty_counts[recipe["difficulty"]] += 1
-            
-            # 영양소 누적
-            nutrition = recipe["nutrition_per_100g"]
-            for nutrient in nutrition_totals.keys():
-                nutrition_totals[nutrient] += nutrition.get(nutrient, 0)
-        
-        # 결과 계산
-        recipe_count = len(self.recipe_database)
-        
-        trends["diet_popularity"] = {diet: count/recipe_count*100 
-                                   for diet, count in diet_counts.items()}
-        trends["avg_cooking_time"] = total_cooking_time / recipe_count
-        trends["difficulty_distribution"] = {diff: count/recipe_count*100 
-                                           for diff, count in difficulty_counts.items()}
-        trends["nutrition_averages"] = {nutrient: total/recipe_count 
-                                      for nutrient, total in nutrition_totals.items()}
-        
-        return trends
-    
-    def display_trends(self):
-        # 레시피 트렌드 정보 출력 메서드
-        
-        print("\n레시피 트렌드 분석 (국가표준식품성분표 기반)")
-        print("=" * 60)
-        
-        trends = self.analyze_recipe_trends()
-        
-        # 식단별 인기도
-        print("\n식단 유형별 분포:")
-        for diet_type, percentage in trends["diet_popularity"].items():
-            print(f"  • {diet_type}: {percentage:.1f}%")
-        
-        # 평균 조리시간
-        print(f"\n평균 조리시간: {trends['avg_cooking_time']:.1f}분")
-        
-        # 난이도 분포
-        print("\n난이도 분포:")
-        for difficulty, percentage in trends["difficulty_distribution"].items():
-            print(f"  • {difficulty}: {percentage:.1f}%")
-        
-        # 평균 영양소
-        print("\n평균 영양소 (100g당):")
-        nutrition_avg = trends["nutrition_averages"]
-        print(f"  • 칼로리: {nutrition_avg['kcal']:.1f} kcal")
-        print(f"  • 단백질: {nutrition_avg['protein_g']:.1f}g")
-        print(f"  • 탄수화물: {nutrition_avg['carb_g']:.1f}g")
-        print(f"  • 지방: {nutrition_avg['fat_g']:.1f}g")
-        print(f"  • 당류: {nutrition_avg['당류']:.1f}g")
-        print(f"  • 나트륨: {nutrition_avg['sodium_mg']:.1f}mg")
 
 
 def main():
@@ -653,31 +533,8 @@ def main():
     try:
         # 국가표준식품성분표 사용으로 변경
         recommender = RecipeRecommendationSystem('전처리_국가표준식품성분표.csv')
-        
-        # 메인 메뉴
-        while True:
-            print("\n메인 메뉴")
-            print("1. 맞춤 레시피 추천받기")
-            print("2. 레시피 트렌드 보기")
-            print("3. 종료")
-            
-            choice = input("선택하세요 (1-3): ").strip()
-            
-            if choice == "1":
-                # 추천 세션 실행
-                recommender.run_recommendation_session()
-                
-            elif choice == "2":
-                # 트렌드 분석 표시
-                recommender.display_trends()
-                
-            elif choice == "3":
-                print("\n시스템을 종료합니다. 맛있는 요리 하세요!")
-                break
-                
-            else:
-                print("\n잘못된 입력입니다. 다시 선택해주세요.")
-        
+        recommender.run_recommendation_session()
+
     except FileNotFoundError:
         print("오류: '전처리_국가표준식품성분표.csv' 파일을 찾을 수 없습니다.")
         print("파일 경로를 확인해주세요.")
