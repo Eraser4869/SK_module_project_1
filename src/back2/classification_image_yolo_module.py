@@ -34,6 +34,10 @@ class IngredientDetector:
         for i, result in enumerate(self.model(image_paths)):    #오류 이미지의 순서를 알기 위해 추가
             try:
                 labels = [] # 현재 이미지의 식재료를 저장하는 리스트
+                if result.boxes is None or len(result.boxes) == 0:
+                    print(f'{i}번째 이미지에서는 객체를 감지하지 못했습니다.')
+                    all_labels.append([])  # 감지 실패 시 빈 리스트 추가
+                    continue  # 다음 이미지로 이동
                 for box in result.boxes:    # 감지된 객체들 반복
                     cls_id = int(box.cls)   # 클래스ID를 정수로 변환(0.0 --> 0 등)
                     label = self.class_names[cls_id]    # 클래스 ID를 이름으로 변환(1 --> 사과 등)
@@ -42,7 +46,10 @@ class IngredientDetector:
             except Exception as e:
                 print(f'!!!에러 발생!!! {i}번째 이미지를 처리 중 오류가 발생했습니다. 오류: {e}')
                 all_labels.append([])   #오류가 난 경우 빈 리스트를 추가 후 계속 진행
+                print(f'감지된 객체 없음. {i}번째 이미지')
+                
         return all_labels
+    
     #JSON 변환 메서드
     def to_json(self, image_input: Union[str, List[str], Dict[str, List[str]]]) -> str: 
         """
@@ -65,13 +72,15 @@ class IngredientDetector:
             return json.dumps({"error": str(e)}, ensure_ascii=False, indent=2)
     
 
-#main파일
+#main파일(디버깅용)
 
 def main():
-    yolo_model_path = "src/back2/runs/scratch/yolov8_scratch/weights/best.pt"   #실제로는 환경변수 사용(env파일)
+    #실제로는 환경변수 사용(env파일 등)
+    yolo_model_path = "C:/Users/choyk/Documents/GitHub/SK_module_project_1/src/back2/runs/food_ingredient_fresh/weights/best.pt"
     #실제로는 받은 이미지 사용
     test_image_path = [""]
-    detector = IngredientDetector()
+    detector = IngredientDetector(yolo_model_path)
+    detector.to_json(test_image_path)
 
 
 
