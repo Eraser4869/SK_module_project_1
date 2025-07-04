@@ -602,14 +602,26 @@ with col_right:
             st.markdown('</div>', unsafe_allow_html=True)
         st.markdown('<div class="decision-buttons">', unsafe_allow_html=True)
         st.markdown("### 이 레시피로 요리하시겠어요?")
-        col_spacer, col_yes, col_no, col_spacer2 = st.columns([1, 2, 2, 1])
+        col_spacer, col_yes, col_no, col_exit, col_spacer2 = st.columns([1, 2, 2, 2, 1])
+
         with col_yes:
             if st.button("✅ Yes, 이걸로 할게요!", key="yes_btn"):
                 handle_yes()
+                st.session_state.choice_result = 1  # ✅ 선택: 1
                 st.rerun()
+
         with col_no:
             if st.button("❌ No, 다른 레시피 보여주세요", key="no_btn"):
                 handle_no()
+                st.session_state.choice_result = 2  # ❌ 다음: 2
+                st.rerun()
+
+        with col_exit:
+            if st.button("⛔ 종료", key="exit_btn"):
+                st.session_state.analyzing_mode = False
+                st.session_state.selected_recipe_mode = False
+                st.session_state.choice_result = 3  # ⛔ 종료: 3
+                st.success("레시피 추천을 종료했습니다.")
                 st.rerun()
         st.markdown(f"**({st.session_state.current_recipe_index + 1} / {len(analyzed_recipes)})**")
         st.markdown('</div>', unsafe_allow_html=True)
