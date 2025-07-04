@@ -274,14 +274,6 @@ def example_usage():
     # 통합기 초기화 및 실행
     integrator = RecipeDataIntegrator()
     result = integrator.integrate_recipe_data(test_recipes, preferences)
-
-    # 최종 통합 데이터 구조 출력
-    # print("\n=== 최종 통합 데이터 구조 ===")
-    # for recipe_name, data in result.items():
-    #    print(f"\n레시피: {recipe_name}")
-    #    print(f"  식단 분류: {data['diet_classifications']}")
-    #    print(f"  조리 정보: {data['cooking_info']}")
-    #    print(f"  영양 정보 존재: {'nutrition_info' in data and data['nutrition_info'] is not None}")
     
     return result
 
