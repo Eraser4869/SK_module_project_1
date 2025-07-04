@@ -145,7 +145,6 @@ def extract_ingredient_info(raw: str) -> dict:
             }
         except Exception as e:
             print("[ERROR] GPT 보정 실패:", e)
-            print("[INFO] 기존 파싱 결과 유지")
     else:
         print("[INFO] GPT 보정 생략 - 무시 가능한 부재료들")
 
@@ -187,7 +186,6 @@ if __name__ == "__main__":
 
     fixed_data = []
     for idx, row in enumerate(targets.itertuples(), 1):
-        print(f"[INFO] ({idx}/{len(targets)}) '{row.요리이름}' 전처리 중...")
         parsed = extract_ingredient_info(row.재료)
         fixed_data.append(json.dumps(parsed, ensure_ascii=False))
 
