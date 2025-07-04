@@ -60,9 +60,7 @@ def run_recipe_recommendation(보유_재료: list):
 
     print(f"[DEBUG] 총 추천 대상 레시피 수: {len(recipe_dict)}")
 
-    # 6. 분류기 실행
-    classifier = SimpleRecipeClassifier(recipe_dict)
-    return classifier.recommend(보유_재료)
+    return recipe_dict
 
 # ✅ 테스트용 메인
 if __name__ == "__main__":
