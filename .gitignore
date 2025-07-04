@@ -1,11 +1,9 @@
 .venv
+*.yaml
+*.env
+*.jpg
+*.png
+*.csv
+runs/
 
-.env
 
-.csv
-
-/data
-src/back1/전처리_음식DB.csv
-src/back1/음식DB.csv
-src/back1/전처리_국가표준식품성분표.csv
-src/back1/국가표준식품성분표.csv

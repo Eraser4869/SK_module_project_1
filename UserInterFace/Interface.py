@@ -18,8 +18,8 @@ def get_user_input() -> Dict[str, Dict[str, Union[List[str], List[Image.Image]]]
         image_ingredients.append(st.session_state["uploaded_image"])
 
     diet_opts = ["다이어트", "채식", "저염", "저탄고지"]
-    time_opts = ["간단", "보통", "정성", "상관없음"]
-    diff_opts = ["쉬움", "보통", "어려움", "상관없음"]
+    time_opts = ["간단", "보통", "정성"]
+    diff_opts = ["쉬움", "보통", "어려움"]
 
     diet_bools = [st.session_state.get(f"diet_{i}", False) for i in range(len(diet_opts))]
     time_bools = [st.session_state.get(f"time_{i}", False) for i in range(len(time_opts))]
@@ -146,6 +146,11 @@ html, body, .stApp {
     display: flex;
     flex-direction: column;
     align-items: center;
+    transition: all 0.3s ease; /* 부드러운 전환 효과 */
+}
+.recipe-card:hover {
+    transform: translateY(-6px); /* 위로 6px 이동 */
+    box-shadow: 0 8px 24px rgba(0,0,0,0.15); /* 그림자 확대 */
 }
 .recipe-title {
     font-weight: bold;
@@ -447,7 +452,6 @@ with col_left:
                 st.checkbox("정성", key="time_2")
             with time_col2:
                 st.checkbox("보통", key="time_1")
-                st.checkbox("상관없음", key="time_3")
         with st.expander("📊 희망 난이도"):
             diff_col1, diff_col2 = st.columns(2)
             with diff_col1:
@@ -455,7 +459,6 @@ with col_left:
                 st.checkbox("어려움", key="diff_2")
             with diff_col2:
                 st.checkbox("보통", key="diff_1")
-                st.checkbox("상관없음", key="diff_3")
 
         if 'ingredient_input_value' not in st.session_state:
             st.session_state.ingredient_input_value = ""
@@ -522,6 +525,7 @@ with col_left:
         })
 recipe_instructions = {
     "오므라이스": """
+    
 **재료**
 - 계란 1개
 - 밥 1공기
@@ -535,6 +539,7 @@ recipe_instructions = {
 4. 볶음밥을 계란으로 감싸면 완성!
 """,
     "샐러드": """
+
 **재료**
 - 양상추
 - 오이
@@ -547,6 +552,7 @@ recipe_instructions = {
 3. 원하는 드레싱을 뿌려 마무리합니다.
 """,
     "토마토 파스타": """
+
 **재료**
 - 파스타면
 - 토마토
@@ -563,6 +569,7 @@ recipe_instructions = {
 
 with col_right:
     if st.session_state.analyzing_mode:
+        # 심플 텍스트 바
         st.markdown("""
         <div style="width:100%;padding:18px 0 18px 0;text-align:center;font-size:1.5em;font-weight:bold;border-bottom:1px solid #eee;background:rgba(255,255,255,0.7);">
         추천 레시피
@@ -672,8 +679,15 @@ with col_right:
                         st.session_state[key] = True
                         st.rerun()
                 else:
-                    st.markdown(f"### 🌟 {title} 조리법")
-                    st.markdown(recipe_instructions[title])
+                    st.markdown(f"""
+                    <div class="recipe-card">
+                        <div class="recipe-title">{title}</div>
+                        <div style="font-size:13px; margin-top: 10px; text-align:left; padding: 0 10px;">
+                            <pre style="white-space: pre-wrap;">{recipe_instructions[title]}</pre>
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
+
                     if st.button(f"{title} 카드로 돌아가기", key=f"back_{key}"):
                         st.session_state[key] = False
                         st.rerun()
