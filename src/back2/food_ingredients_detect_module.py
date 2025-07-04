@@ -207,14 +207,25 @@ class IngredientDetector:
             return json.dumps({"error": str(e)}, ensure_ascii=False, indent=2)
         
         
-#main파일
+#main파일(디버깅, 사용 방식)
+def pil_image_to_dict(img):
+    buffered = BytesIO()
+    img.save(buffered, format="PNG")
+    img_str = base64.b64encode(buffered.getvalue()).decode()
+    return {
+        "mode": img.mode,
+        "size": img.size,
+        "data": img_str
+    }
 
 def main():
-    yolo_model_path = "C:/Users/choyk/Documents/GitHub/SK_module_project_1/src/back2/runs/food_ingredient_fresh/weights/best.pt"   #실제로는 환경변수 사용(env파일)
-    test_image_path = {"이미지": ['이미지 경로']}
+    yolo_model_path = "C:/Users/choyk/Documents/GitHub/SK_module_project_1/src/back2/runs/food_ingredient_fresh/weights/best.pt"   #실제로는 환경변수 사용(env파일 등)
+    img = Image.open("cc.jpg")
+    img_dict = pil_image_to_dict(img)
     detector = IngredientDetector(yolo_model_path)
     #detector.to_json(test_image_path)
-    print(detector.to_json(test_image_path))
+    print(detector.to_json([img_dict]))
+
 
 
 if __name__=="__main__":
