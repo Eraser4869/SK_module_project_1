@@ -7,8 +7,11 @@ import joblib
 import re
 import json
 
-#  데이터 불러오기 및 전처리 
-df = pd.read_csv('src/back1/data/RECIPE_SEARCH.csv')
+
+
+
+# 데이터 불러오기 및 전처리 
+df = pd.read_csv('RECIPE_SEARCH.csv')
 
 # 조리시간 파싱 함수
 def convert_time_to_minutes(time_str):
@@ -42,8 +45,8 @@ y_pred = model.predict(X_test)
 mae = mean_absolute_error(y_test, y_pred)
 print(f"[모델 학습 완료] 평균 절대 오차: {mae:.2f} 분")
 
-joblib.dump(model, 'src/back1/model/cooking_time_model.pkl')
-joblib.dump(X.columns.tolist(), 'src/back1/model/feature_columns.pkl')
+joblib.dump(model, 'cooking_time_model.pkl')
+joblib.dump(X.columns.tolist(), 'feature_columns.pkl')
 print("[모델 및 feature 저장 완료]")
 
 # 레시피명으로 kind / level 추출
@@ -58,8 +61,8 @@ def get_kind_level_by_recipe(recipe_name: str, df_raw: pd.DataFrame):
 
 # 예측 함수 
 def predict_with_model(kind: str, level: str) -> float:
-    model = joblib.load('src/model/cooking_time_model.pkl')
-    feature_columns = joblib.load('src/model/feature_columns.pkl')
+    model = joblib.load('cooking_time_model.pkl')
+    feature_columns = joblib.load('feature_columns.pkl')
 
     sample = {col: 0 for col in feature_columns}
     kind_col = f'CKG_KND_ACTO_NM_{kind}'
@@ -89,6 +92,7 @@ def parse_json_and_predict(json_str, preference_dict):
     #   "희망_조리시간": ["간단", "보통"],
     #   "희망_난이도": ["쉬움"]
     # }
+
 
     for recipe_name in data:
         kind, level = get_kind_level_by_recipe(recipe_name, df)
