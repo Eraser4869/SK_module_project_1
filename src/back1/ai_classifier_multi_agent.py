@@ -915,32 +915,18 @@ def main():
     system = MultiAgentRecipeSystem('전처리_국가표준식품성분표.csv', use_ai=True)
     
     # 딕셔너리 리터럴로 테스트용 레시피 데이터 정의
-    test_recipes = {
-        "AI 매칭 테스트 - 치킨 샐러드": {
+    test_recipes ={
+        "소고기떡국": {
             "재료": [
-                {"item": "닭 가슴살", "amount": 150, "unit": "g"},
-                {"item": "상추잎", "amount": 80, "unit": "g"},
-                {"item": "방울토마토", "amount": 10, "unit": "개"},
-                {"item": "오이", "amount": 50, "unit": "g"}
-            ],
-            "조미료": [
-                {"item": "엑스트라 버진 올리브오일", "amount": 1, "unit": "큰술"},
-                {"item": "천일염", "amount": 1, "unit": "작은술"}
+                {"item": "떡국떡", "amount": 400, "unit": "g"},
+                {"item": "다진소고기", "amount": 100, "unit": "g"},
+                {"item": "대파", "amount": 1, "unit": "대"}
             ]
         },
-        
-        "복합 단위 테스트 - 한식 불고기": {
+        "된장수육": {
             "재료": [
-                {"item": "소 등심", "amount": 200, "unit": "g"},
-                {"item": "양파", "amount": 1, "unit": "개"},
-                {"item": "당근", "amount": 50, "unit": "g"},
-                {"item": "파", "amount": 30, "unit": "g"}
-            ],
-            "조미료": [
-                {"item": "진간장", "amount": 3, "unit": "큰술"},
-                {"item": "매실청", "amount": 2, "unit": "큰술"},
-                {"item": "참기름", "amount": 1, "unit": "작은술"},
-                {"item": "다진 마늘", "amount": 1, "unit": "큰술"}
+                {"item": "삼겹살", "amount": 500, "unit": "g"},
+                {"item": "된장", "amount": 2, "unit": "큰술"}
             ]
         }
     }
