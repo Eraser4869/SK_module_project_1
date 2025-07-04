@@ -219,7 +219,7 @@ def pil_image_to_dict(img):
     }
 
 def main():
-    yolo_model_path = "C:/Users/choyk/Documents/GitHub/SK_module_project_1/src/back2/runs/food_ingredient_fresh/weights/best.pt"   #실제로는 환경변수 사용(env파일 등)
+    yolo_model_path = "SK_module_project_1/src/back2/runs/food_ingredient_fresh/weights/best.pt"   #실제로는 환경변수 사용(env파일 등)
     img = Image.open("cc.jpg")
     img_dict = pil_image_to_dict(img)
     detector = IngredientDetector(yolo_model_path)
