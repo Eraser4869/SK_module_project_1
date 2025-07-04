@@ -1,9 +1,10 @@
-# .venv
-# *.yaml
-# *.env
-# *.jpg
-# *.png
-# *.csv
+.venv
+*.yaml
+*.env
+*.jpg
+*.png
+*.csv
+runs/
 
 
 
