@@ -10,7 +10,7 @@ from typing import Dict, List, Tuple, Optional, Any
 from difflib import SequenceMatcher  # 문자열 유사도 계산용 (기본 매칭에서 사용)
 from abc import ABC, abstractmethod  # 추상 기본 클래스 정의용
 
-# AI 라이브러리 import
+# AI 라이브러리 import (설치 필요: pip install sentence-transformers torch)
 # try-except 구문을 사용하여 라이브러리 설치 여부 확인
 try:
     from sentence_transformers import SentenceTransformer, util  # 문장 임베딩 모델
@@ -24,8 +24,7 @@ except ImportError:
 
 # 모든 에이전트의 기본 클래스 - 추상 클래스로 공통 기능 정의
 class BaseAgent(ABC):
-    
-    
+
     def __init__(self, agent_name: str):
         # 에이전트 이름 설정
         self.agent_name = agent_name
@@ -35,7 +34,7 @@ class BaseAgent(ABC):
 
     # 다른 에이전트를 등록하여 협업
     def register_agent(self, agent_name: str, agent_instance):
-        """
+        """        
         Args:
             agent_name: 등록할 에이전트의 이름
             agent_instance: 에이전트 객체 인스턴스
@@ -46,7 +45,7 @@ class BaseAgent(ABC):
 
     # 다른 에이전트의 메서드를 호출 (툴처럼 사용)
     def call_agent(self, agent_name: str, method_name: str, *args, **kwargs):
-        """
+        """        
         Args:
             agent_name: 호출할 에이전트 이름
             method_name: 호출할 메서드 이름
@@ -76,6 +75,7 @@ class BaseAgent(ABC):
 
 
 
+
 # 데이터 관리 전용 에이전트 - 영양소 DB와 기본 데이터 관리
 class DataManagerAgent(BaseAgent):
     
@@ -83,10 +83,14 @@ class DataManagerAgent(BaseAgent):
         # 부모 클래스 초기화 호출
         super().__init__("DataManager")
         
+        # print() 함수로 진행 상황 표시
+        print("데이터 로딩 중...")
         # private 메서드를 호출하여 데이터 초기화
         self.nutrition_db = self._load_nutrition_data(nutrition_csv_path)
         self.fallback_nutrition = self._create_fallback_nutrition()
         self.unit_conversion = self._create_unit_conversion()
+        # f-string으로 완료 메시지와 DB 크기 표시
+        print(f"데이터 로딩 완료 (DB: {len(self.nutrition_db)}개 항목)")
     
 
     # 데이터 관련 요청 관리
@@ -100,19 +104,20 @@ class DataManagerAgent(BaseAgent):
             요청된 데이터
         """
 
-        # 액션 분기 처리
+    
+        # if-elif-else 구조로 액션 분기 처리
         if action == "get_nutrition":
-            # 딕셔너리에서 키값 가져오기
+            # get() 메서드: 딕셔너리에서 키값 안전하게 가져오기
             return self.get_nutrition_data(kwargs.get('item_name'))
         elif action == "get_fallback":
             return self.fallback_nutrition
         elif action == "get_conversion":
             return self.unit_conversion
         elif action == "get_all_items":
-            # pandas Index를 일반 리스트로 변환 후 기본 재료와 병합
+            # list() 함수로 pandas Index를 일반 리스트로 변환 후 기본 재료와 합치기
             return list(self.nutrition_db.index) + list(self.fallback_nutrition.keys())
         else:
-            # 예외 발생
+            # 예외 발생시키기
             raise ValueError(f"알 수 없는 액션: {action}")
     
 
@@ -120,7 +125,7 @@ class DataManagerAgent(BaseAgent):
     def get_nutrition_data(self, item_name: str) -> Optional[Dict]:
         """        
         Args:
-            item_name: 조회 재료명
+            item_name: 조회할 재료명
             
         Returns:
             영양소 정보 딕셔너리 또는 None
@@ -149,7 +154,7 @@ class DataManagerAgent(BaseAgent):
         df = pd.read_csv(csv_path, encoding='utf-8-sig')
         
         # dropna() 메서드로 'item' 컬럼이 비어있는 행 제거
-        # subset 매개변수: 'item'만 확인
+        # subset 매개변수: 특정 컬럼들만 확인
         df = df.dropna(subset=['item'])
         
         # set_index() 메서드로 'item' 컬럼을 인덱스로 설정
@@ -165,7 +170,7 @@ class DataManagerAgent(BaseAgent):
         Returns:
             재료명을 키로 하고 영양소 정보를 값으로 하는 중첩 딕셔너리
         """
-
+        
         # 중첩 딕셔너리 구조: {재료명: {영양소명: 값}}
         return {
             # 기본 조미료들 (100g 당 영양소)
@@ -228,7 +233,7 @@ class DataManagerAgent(BaseAgent):
 
     # 단위 변환 테이블을 생성하는 메서드
     def _create_unit_conversion(self) -> Dict:
-        """
+        """        
         Returns:
             변환 정보를 담은 중첩 딕셔너리
         """
@@ -255,6 +260,7 @@ class DataManagerAgent(BaseAgent):
 
 # 재료 매칭 전용 에이전트 - AI 기반 재료명 매칭
 class IngredientMatchingAgent(BaseAgent):
+
     
     def __init__(self, use_ai: bool = True):
         # 부모 클래스 초기화
@@ -265,10 +271,8 @@ class IngredientMatchingAgent(BaseAgent):
         # AI 초기화 상태를 추적하는 플래그
         self.is_ai_initialized = False
     
-
-
+    # 에이전트 등록 후 AI 초기화 - 지연 초기화 패턴
     def initialize_ai_after_registration(self):
-        """에이전트 등록 후 AI 초기화 - 지연 초기화 패턴"""
         # and 연산자로 조건 체크: AI 사용 설정 & 아직 초기화 안됨
         if self.use_ai and not self.is_ai_initialized:
             # private 메서드 호출
@@ -277,13 +281,13 @@ class IngredientMatchingAgent(BaseAgent):
             self.is_ai_initialized = True
     
 
-    # 재료 매칭 정리
+    # 재료 매칭 처리
     def process(self, ingredient_name: str, **kwargs) -> Tuple[str, float, Dict]:
         """        
         Args:
             ingredient_name: 매칭할 재료명
             **kwargs: 추가 매개변수들
-        
+            
         Returns:
             (매칭된 재료명, 유사도, 영양소 정보) 튜플
         """
@@ -297,8 +301,7 @@ class IngredientMatchingAgent(BaseAgent):
         else:
             return self._match_basic(ingredient_name)
     
-
-
+    
     # AI 매칭 시스템을 초기화하는 메서드
     def _initialize_ai_matcher(self):
 
@@ -379,7 +382,7 @@ class IngredientMatchingAgent(BaseAgent):
         query_embedding = self.embedding_model.encode(ingredient_name, convert_to_tensor=True)
         
         # util.cos_sim()으로 코사인 유사도 계산 (의미적 유사성 측정)
-        # [0]으로 첫 번째 결과만 가져오기 (쿼리가 1개)
+        # [0]으로 첫 번째 결과만 가져오기 (쿼리가 1개이므로)
         similarities = util.cos_sim(query_embedding, self.food_embeddings)[0]
         
         # torch.argmax()로 가장 높은 유사도의 인덱스 찾기
@@ -451,9 +454,9 @@ class UnitConversionAgent(BaseAgent):
     def __init__(self):
         # 부모 클래스 초기화
         super().__init__("UnitConverter")
+    
 
-
-    # 단위를 그램으로 변환 (이중확인)
+    # 단위를 그램으로 변환
     def process(self, amount: float, unit: str, ingredient_name: str = '') -> float:
         """        
         Args:
@@ -518,7 +521,7 @@ class NutritionCalculatorAgent(BaseAgent):
 
     # 레시피의 전체 영양소 계산
     def process(self, recipe_data: Dict) -> Dict:
-        """       
+        """        
         Args:
             recipe_data: 레시피 정보가 담긴 딕셔너리
             
@@ -611,7 +614,6 @@ class RecipeClassificationAgent(BaseAgent):
         self.classification_rules = self._define_classification_rules()
     
 
-
     # 레시피 분류 수행
     def process(self, recipe_name: str, nutrition_result: Dict) -> Dict:
         """        
@@ -628,7 +630,7 @@ class RecipeClassificationAgent(BaseAgent):
         classifications = {}
         reasons = {}
         
-        # =========================다이어트 식단 분류=========================
+        # === 다이어트 식단 분류 ===
         # 딕셔너리 접근으로 분류 규칙 가져오기
         diet_rules = self.classification_rules['다이어트']
         
@@ -661,7 +663,7 @@ class RecipeClassificationAgent(BaseAgent):
         # .join() 메서드로 리스트 요소들을 문자열로 연결
         reasons['다이어트'] = ", ".join(failed_conditions) if failed_conditions else "모든 조건 만족"
         
-        # =========================== 저탄고지(케토) 식단 분류 ===============================
+        # === 저탄고지(케토) 식단 분류 ===
         keto_rules = self.classification_rules['저탄고지']
         keto_checks = [
             nutrition_100g.get('carb_g', 0) <= keto_rules['carb_per_100g_max'],
@@ -671,7 +673,7 @@ class RecipeClassificationAgent(BaseAgent):
         ]
         classifications['저탄고지'] = all(keto_checks)
         
-        # 실패 조건 체크
+        # 실패 조건 체크 (다이어트와 동일한 패턴)
         failed_conditions = []
         if not keto_checks[0]: 
             failed_conditions.append(f"탄수화물 초과({nutrition_100g.get('carb_g', 0):.1f}g)")
@@ -683,7 +685,7 @@ class RecipeClassificationAgent(BaseAgent):
             failed_conditions.append(f"당류 초과({nutrition_100g.get('당류', 0):.1f}g)")
         reasons['저탄고지'] = ", ".join(failed_conditions) if failed_conditions else "모든 조건 만족"
         
-        # ======================================= 저염 식단 분류 ================================
+        # === 저염 식단 분류 ===
         # 딕셔너리 중첩 접근으로 나트륨 제한값 가져오기
         sodium_limit = self.classification_rules['저염']['sodium_per_100g_max']
         # <= 연산자로 나트륨 기준 확인
@@ -696,7 +698,7 @@ class RecipeClassificationAgent(BaseAgent):
         else:
             reasons['저염'] = f"나트륨 초과({nutrition_100g.get('sodium_mg', 0):.1f}mg)"
         
-        # ======================================= 채식 식단 분류 ==================================
+        # === 채식 식단 분류 ===
         # + 연산자로 문자열 연결, .join() 메서드로 리스트를 문자열로 변환
         # 리스트 컴프리헨션으로 매칭 상세 정보에서 원본 재료명만 추출
         recipe_text = recipe_name + ' ' + ' '.join([d['original'] for d in nutrition_result['matching_details']])
@@ -718,7 +720,7 @@ class RecipeClassificationAgent(BaseAgent):
         else:
             reasons['채식'] = f"동물성 재료: {', '.join(found_non_veg)}"
         
-        # ==================================== 매칭률 계산 ==============================
+        # === 매칭률 계산 ===
         # sum() 함수와 제네레이터 표현식으로 조건 만족 개수 계산
         # >= 연산자로 유사도 0.8 이상인 매칭 개수 세기
         high_similarity_matches = sum(1 for d in nutrition_result['matching_details'] 
@@ -740,7 +742,7 @@ class RecipeClassificationAgent(BaseAgent):
 
     # 레시피 분류 규칙을 정의하는 메서드
     def _define_classification_rules(self) -> Dict:
-        """
+        """        
         Returns:
             분류 규칙을 담은 중첩 딕셔너리
         """
@@ -779,12 +781,14 @@ class RecipeClassificationAgent(BaseAgent):
 
 # 전체 워크플로우를 조율하는 마스터 에이전트
 class CoordinatorAgent(BaseAgent):
-    
+
     
     def __init__(self, nutrition_csv_path: str, use_ai: bool = True):
         # 부모 클래스 초기화
         super().__init__("Coordinator")
         
+        # print() 함수로 멀티에이전트 시스템 초기화 시작 알림
+        print("멀티에이전트 시스템 초기화 중...")
         # 모든 전문 에이전트들을 초기화 (AI는 지연 초기화)
         self.data_manager = DataManagerAgent(nutrition_csv_path)
         self.ingredient_matcher = IngredientMatchingAgent(use_ai)
@@ -792,18 +796,20 @@ class CoordinatorAgent(BaseAgent):
         self.nutrition_calculator = NutritionCalculatorAgent()
         self.recipe_classifier = RecipeClassificationAgent()
         
+        # print() 함수로 에이전트 네트워크 설정 상태 표시
+        print("에이전트 네트워크 설정 중...")
         # private 메서드 호출하여 에이전트 간 연결 설정
         self._setup_agent_network()
         
         # and 연산자로 두 조건 모두 확인 후 AI 초기화
         if use_ai and AI_AVAILABLE:
             self.ingredient_matcher.initialize_ai_after_registration()
-    
-
-
-    # 에이전트들 간의 네트워크 연결 설정
-    def _setup_agent_network(self):
         
+        # print() 함수로 시스템 준비 완료 알림
+        print("멀티에이전트 시스템 준비 완료!")
+    
+    def _setup_agent_network(self):
+        """에이전트들 간의 네트워크 연결 설정"""
         # 딕셔너리 리터럴로 에이전트들 정리
         agents = {
             "DataManager": self.data_manager,
@@ -857,8 +863,10 @@ class CoordinatorAgent(BaseAgent):
 # 멀티에이전트 레시피 시스템의 메인 클래스
 class MultiAgentRecipeSystem:
     
+
+    # 멀티에이전트 시스템 초기화
     def __init__(self, nutrition_csv_path: str, use_ai: bool = True):
-        """
+        """        
         Args:
             nutrition_csv_path: 영양소 데이터 CSV 파일 경로
             use_ai: AI 매칭 사용 여부
@@ -870,7 +878,7 @@ class MultiAgentRecipeSystem:
 
     # 레시피 분석 (멀티에이전트 협업 워크플로우)
     def analyze_recipe(self, recipe_name: str, recipe_data: Dict) -> Dict:
-        """        
+        """
         Args:
             recipe_name: 레시피 이름
             recipe_data: 레시피 데이터 (재료, 조미료 정보)
@@ -882,10 +890,9 @@ class MultiAgentRecipeSystem:
         return self.coordinator.process(recipe_name, recipe_data)
     
 
-
     # 각 에이전트의 상태 정보 반환
     def get_agent_status(self) -> Dict:
-        """
+        """        
         Returns:
             에이전트 상태 정보를 담은 딕셔너리
         """
@@ -943,22 +950,6 @@ def main():
         # 멀티에이전트 협업으로 레시피 분석
         result = system.analyze_recipe(recipe_name, recipe_data)
         
-        # 테스트 결과 출력 (개발/디버깅용)
-        print(f"\n=== {result['recipe_name']} ===")
-        nutrition_result = result['nutrition_result']
-        nutrition_100g = nutrition_result['nutrition_per_100g']
-        
-        # f-string과 :.1f 포맷팅으로 소수점 1자리까지 표시
-        print(f"총 중량: {nutrition_result['total_weight_g']:.1f}g")
-        print(f"재료 매칭률: {result['matching_rate']:.1f}%")
-        
-        # 영양소 정보 출력 (100g당)
-        print(f"칼로리: {nutrition_100g.get('kcal', 0):.1f}kcal")
-        print(f"탄수화물: {nutrition_100g.get('carb_g', 0):.1f}g")
-        print(f"단백질: {nutrition_100g.get('protein_g', 0):.1f}g")
-        print(f"지방: {nutrition_100g.get('fat_g', 0):.1f}g")
-        print(f"나트륨: {nutrition_100g.get('sodium_mg', 0):.1f}mg")
-        
         # 분류 결과 출력
         print("분류 결과:")
         # .items() 메서드로 분류 결과 순회
@@ -977,8 +968,11 @@ def main():
             print(f"적합한 식단: {', '.join(applicable_labels)}")
         else:
             print("적합한 식단: 일반식")
+    
+    # print() 함수로 전체 분석 완료 알림
+    print(f"\n모든 레시피 분석 완료!")
 
 
-
+# __name__ == "__main__" 조건문으로 스크립트 직접 실행시에만 main() 호출
 if __name__ == "__main__":
     main()
