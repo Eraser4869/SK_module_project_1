@@ -3,15 +3,15 @@ import re
 import json
 import pandas as pd
 from fractions import Fraction
-from mecab import MeCab
 from dotenv import load_dotenv
 from openai import OpenAI
+from konlpy.tag import Okt  # ✅ 변경된 부분
 
 # ===== 환경 설정 =====
 load_dotenv()
 api_key = os.getenv("OPENAI_API_KEY")
 client = OpenAI(api_key=api_key)
-tagger = MeCab()
+tagger = Okt()  # ✅ 변경된 부분
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CSV_PATH = os.path.join(BASE_DIR, "recipes.csv")
 
@@ -151,10 +151,6 @@ def extract_ingredient_info(raw: str) -> dict:
     return {"재료": 재료, "조미료": 조미료}
 
 def extract_ingredient_info_light(raw: str) -> dict:
-    """
-    빠른 필터링용 경량 버전.
-    GPT 호출 없이 item만 파싱하여 반환.
-    """
     if not isinstance(raw, str):
         return {"재료": [], "조미료": []}
 
@@ -177,7 +173,6 @@ def extract_ingredient_info_light(raw: str) -> dict:
                     재료.append(parsed)
 
     return {"재료": 재료, "조미료": 조미료}
-
 
 if __name__ == "__main__":
     df = pd.read_csv(CSV_PATH)
