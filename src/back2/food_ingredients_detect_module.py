@@ -192,19 +192,20 @@ class IngredientDetector:
         return temp_file.name
 
     #JSON 변환 메서드
-    def to_json(self, image_dict: List[dict]) -> str: 
+    def return_ingredient(self, image_dict: List[dict]) -> str: 
         """
         이미지는 단일 객체, 리스트, 딕셔너리 형태로 반환
         classify_ingredients 결과를 JSON 형식으로 반환
         반환값: JSON 문자열
         """
         try:
-            all_labels = self.classify_ingredients(image_dict) # 감지 결과 가져오기 
-            return json.dumps({"results": all_labels}, ensure_ascii=False, indent=2)    # 한글이 안깨지게 설정. 들여쓰기까지(가독성)
+            all_labels = self.classify_ingredients(image_dict) # 감지 결과 가져오기
+            flattened = list(set(label for sublist in all_labels for label in sublist)) 
+            return flattened   # 결과 리스트 형태로 반환
         
         except Exception as e:
-            print(f'to_json 오류 발생: {e}')
-            return json.dumps({"error": str(e)}, ensure_ascii=False, indent=2)
+            print(f'return_ingredient 오류 발생: {e}')
+            return [{"error": str(e)}]  # 오류도 리스트 안에 딕셔너리로 반환
         
         
 #main파일(디버깅, 사용 방식)
@@ -220,7 +221,7 @@ def pil_image_to_dict(img):
 
 def main():
     yolo_model_path = "SK_module_project_1/src/back2/runs/food_ingredient_fresh/weights/best.pt"   #실제로는 환경변수 사용(env파일 등)
-    img = Image.open("cc.jpg")
+    img = Image.open(".jpg")
     img_dict = pil_image_to_dict(img)
     detector = IngredientDetector(yolo_model_path)
     #detector.to_json(test_image_path)
