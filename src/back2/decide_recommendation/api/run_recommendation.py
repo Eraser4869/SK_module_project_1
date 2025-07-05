@@ -138,6 +138,6 @@ def run_recipe_recommendation(보유_재료: list):
 
 # ✅ 테스트 실행
 if __name__ == "__main__":
-    test_in = ["감자", "계란"]
+    test_in = ["감자", "양파"]
     result = run_recipe_recommendation(test_in)
     print(json.dumps(result, ensure_ascii=False, indent=2))
