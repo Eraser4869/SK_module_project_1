@@ -204,11 +204,7 @@ class IngredientDetector:
     
 
     #JSON 변환 메서드
-<<<<<<< HEAD:food_ingredients_detect_module.py
     def return_ingredient(self, image_dict: List[dict]) -> List[str]: 
-=======
-    def return_ingredient(self, image_dict: List[dict]) -> str: 
->>>>>>> 2e243a9035d202c1a13dcdd7a7c2879b57092547:src/back2/food_ingredients_detect_module.py
         """
         이미지는 단일 객체, 리스트, 딕셔너리 형태로 반환
         classify_ingredients 결과를 JSON 형식으로 반환
@@ -216,7 +212,6 @@ class IngredientDetector:
         """
 
         try:
-<<<<<<< HEAD:food_ingredients_detect_module.py
             all_labels = self.classify_ingredients(image_dict)
             flattened = list(set(label for sublist in all_labels for label in sublist)) 
             return flattened   # List[str] 형태로 반환
@@ -226,8 +221,6 @@ class IngredientDetector:
         
         """
         try:
-=======
->>>>>>> 2e243a9035d202c1a13dcdd7a7c2879b57092547:src/back2/food_ingredients_detect_module.py
             all_labels = self.classify_ingredients(image_dict) # 감지 결과 가져오기
             flattened = list(set(label for sublist in all_labels for label in sublist)) 
             return flattened   # 결과 리스트 형태로 반환
@@ -235,10 +228,7 @@ class IngredientDetector:
         except Exception as e:
             print(f'return_ingredient 오류 발생: {e}')
             return [{"error": str(e)}]  # 오류도 리스트 안에 딕셔너리로 반환
-<<<<<<< HEAD:food_ingredients_detect_module.py
         """
-=======
->>>>>>> 2e243a9035d202c1a13dcdd7a7c2879b57092547:src/back2/food_ingredients_detect_module.py
         
         
 #main파일(디버깅, 사용 방식)
@@ -253,13 +243,8 @@ def pil_image_to_dict(img):
     }
 
 def main():
-<<<<<<< HEAD:food_ingredients_detect_module.py
     #yolo_model_path = "SK_module_project_1/src/back2/runs/food_ingredient_fresh/weights/best.pt"   #실제로는 환경변수 사용(env파일 등)
     img = Image.open("yolo_test.jpg")
-=======
-    yolo_model_path = "SK_module_project_1/src/back2/runs/food_ingredient_fresh/weights/best.pt"   #실제로는 환경변수 사용(env파일 등)
-    img = Image.open(".jpg")
->>>>>>> 2e243a9035d202c1a13dcdd7a7c2879b57092547:src/back2/food_ingredients_detect_module.py
     img_dict = pil_image_to_dict(img)
     detector = IngredientDetector()
     print(detector.return_ingredient([img_dict]))
