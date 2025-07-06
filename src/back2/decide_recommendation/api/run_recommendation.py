@@ -1,4 +1,4 @@
-# ✅ 설치 필요: pip install mecab-python3 openai python-dotenv pandas
+# ✅ 설치 필요: pip install kiwipiepy openai python-dotenv pandas
 import os
 import re
 import json
@@ -7,13 +7,13 @@ import pandas as pd
 from fractions import Fraction
 from dotenv import load_dotenv
 from openai import OpenAI
-from mecab import MeCab
+from kiwipiepy import Kiwi  # ✅ MeCab 대신 Kiwi 사용
 
 # ===== 설정 =====
 load_dotenv()
 api_key = os.getenv("OPENAI_API_KEY")
 client = OpenAI(api_key=api_key)
-tagger = MeCab()
+tagger = Kiwi()
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CSV_PATH = os.path.join(BASE_DIR, "recipes.csv")
 
@@ -37,8 +37,9 @@ def clean_item_name(item):
     for phrase in UNNECESSARY_PHRASES:
         item = item.replace(phrase, "")
     item = re.sub(r"(개당|씩)", "", item)
-    tokens = [m[0] for m in tagger.pos(item.strip())]
-    filtered = [t for t in tokens if len(t) > 1 and t not in UNIT_CANDIDATES]
+
+    tokens = tagger.tokenize(item.strip())
+    filtered = [t.form for t in tokens if t.tag.startswith("N") and len(t.form) > 1 and t.form not in UNIT_CANDIDATES]
     return " ".join(filtered).strip()
 
 def extract_amount_and_unit_from_parenthesis(text):
