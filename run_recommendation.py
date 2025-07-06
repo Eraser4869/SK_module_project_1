@@ -1,100 +1,27 @@
-# ✅ 설치 필요: pip install kiwipiepy openai python-dotenv pandas
 import os
-import re
-import json
 import time
 import pandas as pd
-from fractions import Fraction
-from dotenv import load_dotenv
-<<<<<<< HEAD:run_recommendation.py
-from ingredient_utils import extract_ingredient_info, extract_ingredient_info_light
-=======
+import json
 from openai import OpenAI
-from kiwipiepy import Kiwi  # ✅ MeCab 대신 Kiwi 사용
->>>>>>> 2e243a9035d202c1a13dcdd7a7c2879b57092547:src/back2/decide_recommendation/api/run_recommendation.py
+from dotenv import load_dotenv
+from ingredient_utils import extract_ingredient_info, extract_ingredient_info_light
 
-# ===== 설정 =====
+# ✅ 최소 추천 레시피 개수 설정
+MIN_RECIPE_COUNT = 5
+TIME_LIMIT_SECONDS = 15
+
+# ✅ GPT API 설정
 load_dotenv()
 api_key = os.getenv("OPENAI_API_KEY")
 client = OpenAI(api_key=api_key)
-tagger = Kiwi()
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-CSV_PATH = os.path.join(BASE_DIR, "recipes.csv")
 
-SEASONING_KEYWORDS = ["간장", "된장", "고추장", "설탕", "소금", "식초", "후추", "맛술", "참기름", "들기름", "식용유",
-                      "다진마늘", "다진대파", "고춧가루", "올리고당", "레몬즙", "마요네즈", "머스터드", "케찹",
-                      "파슬리", "카레가루", "와사비", "미림", "멸치액젓", "매실청", "매실액", "조청", "청주",
-                      "국간장", "연두부", "버터"]
-UNIT_CANDIDATES = ["g", "ml", "큰술", "작은술", "숟가락", "스푼", "Ts", "T", "개", "알", "쪽", "줄기", "장", "통",
-                   "조각", "대", "줌", "모", "봉지", "컵", "소량", "약간", "적당량", "마리"]
-TEXTUAL_UNITS = ["소량", "약간", "적당량"]
-UNNECESSARY_PHRASES = ["기호에 따라", "선택사항", "취향껏", "원하는 만큼"]
-IGNORE_ITEMS = ["고명", "양념", "양념장"]
+# ✅ 재료 일치 판단
+def is_match(보유: str, 레시피_아이템: str) -> bool:
+    return 보유.strip() == 레시피_아이템.strip()
 
-# ===== 재료 파싱 =====
-def is_seasoning(item):
-    return any(k in item for k in SEASONING_KEYWORDS)
-
-def clean_item_name(item):
-    item = re.sub(r"\([^)]*\)", "", item)
-    item = re.sub(r"\s+", " ", item)
-    for phrase in UNNECESSARY_PHRASES:
-        item = item.replace(phrase, "")
-    item = re.sub(r"(개당|씩)", "", item)
-
-    tokens = tagger.tokenize(item.strip())
-    filtered = [t.form for t in tokens if t.tag.startswith("N") and len(t.form) > 1 and t.form not in UNIT_CANDIDATES]
-    return " ".join(filtered).strip()
-
-def extract_amount_and_unit_from_parenthesis(text):
-    match = re.search(r"\(([\d/\.]+)\s*([가-힣a-zA-Z]+)?\)", text)
-    if match:
-        amt, unit = match.group(1), match.group(2)
-        try:
-            return float(Fraction(amt)), unit
-        except:
-            return None, unit
-    return None, None
-
-def parse_single_ingredient_brute(text):
-    bracket_amount, bracket_unit = extract_amount_and_unit_from_parenthesis(text)
-    for unit in UNIT_CANDIDATES:
-        pattern = rf"(.+?)\s*([\d\/\.]+)?\s*{unit}"
-        match = re.match(pattern, text)
-        if match:
-            item = clean_item_name(match.group(1))
-            raw_amt = match.group(2)
-            try:
-                amount = float(Fraction(raw_amt)) if raw_amt else None
-            except:
-                amount = None
-            amount = amount or bracket_amount
-            unit = unit or bracket_unit
-            return {"item": item, "amount": amount, "unit": unit}
-    for unit in TEXTUAL_UNITS:
-        if unit in text:
-            return {"item": clean_item_name(text.replace(unit, "")), "amount": 1, "unit": unit}
-    return {"item": clean_item_name(text), "amount": bracket_amount, "unit": bracket_unit}
-
-def extract_ingredient_info_light(raw):
-    if not isinstance(raw, str):
-        return {"재료": [], "조미료": []}
-    raw = raw.replace("●", "").replace("·", ",").replace(":", " : ").replace("\n", ",")
-    parts = re.split(r"[,\n·•]", raw)
-    parts = [p.strip() for p in parts if p.strip()]
-    재료, 조미료 = [], []
-    for part in parts:
-        parsed = parse_single_ingredient_brute(part)
-        if parsed["item"]:
-            if is_seasoning(parsed["item"]):
-                조미료.append(parsed)
-            else:
-                재료.append(parsed)
-    return {"재료": 재료, "조미료": 조미료}
-
-# ===== GPT 요청 =====
-def ask_gpt_for_single_recipe(ingredients: list) -> dict:
-    재료_문장 = ", ".join(ingredients)
+# ✅ GPT에 1개 레시피 요청
+def ask_gpt_for_single_recipe(보유재료: list) -> dict:
+    재료_문장 = ", ".join(보유재료)
     prompt = f"""
 다음 재료들이 모두 포함된 간단한 요리를 하나 추천해줘: {재료_문장}
 
@@ -106,8 +33,12 @@ def ask_gpt_for_single_recipe(ingredients: list) -> dict:
   }}
 }}
 
-- 설명 없이 JSON만 응답해.
+- key는 반드시 실제 요리 이름이어야 해 (예: "감자계란덮밥")
+- 단위와 수치는 현실적으로 구성해줘.
+- 설명 없이 오직 JSON만 반환해.
+- 재료는 같은 재료가 번복 되면 안됨.
 """
+
     try:
         response = client.chat.completions.create(
             model="gpt-4",
@@ -116,19 +47,20 @@ def ask_gpt_for_single_recipe(ingredients: list) -> dict:
                 {"role": "user", "content": prompt}
             ],
             temperature=0.5,
-            timeout=10
+            timeout=10  # 응답 지연 방지
         )
-        return json.loads(response.choices[0].message.content.strip())
+        json_str = response.choices[0].message.content.strip()
+        return json.loads(json_str)
     except Exception as e:
         print("[GPT ERROR]", e)
         return {}
 
-# ===== 추천 메인 =====
-def is_match(보유: str, 레시피_아이템: str) -> bool:
-    return 보유.strip() == 레시피_아이템.strip()
-
+# ✅ 메인 추천 함수
 def run_recipe_recommendation(보유_재료: list):
-    df = pd.read_csv(CSV_PATH).dropna(subset=["재료"])
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    csv_path = os.path.join(current_dir, "recipes.csv")
+
+    df = pd.read_csv(csv_path).dropna(subset=["재료"])
     if "재료_JSON" not in df.columns:
         df["재료_JSON"] = None
 
@@ -138,46 +70,74 @@ def run_recipe_recommendation(보유_재료: list):
     for idx, row in df.iterrows():
         parsed_light = extract_ingredient_info_light(row["재료"])
         레시피_재료 = [x["item"].strip() for x in parsed_light["재료"] if x["item"]]
-        is_In = all(any(is_match(보유, r_item) for r_item in 레시피_재료) for 보유 in 보유_재료)
+
+        is_In = all(
+            any(is_match(보유.strip(), r_item) for r_item in 레시피_재료)
+            for 보유 in 보유_재료
+        )
         if is_In:
             if pd.notnull(row["재료_JSON"]):
                 parsed = json.loads(row["재료_JSON"])
             else:
-                parsed = extract_ingredient_info_light(row["재료"])
+                parsed = extract_ingredient_info(row["재료"])
                 df.at[idx, "재료_JSON"] = json.dumps(parsed, ensure_ascii=False)
                 updated_indices.append(idx)
-            recipe_dict[row["요리이름"]] = parsed
 
-    # GPT 보완
-    if len(recipe_dict) < 5:
-        print("[INFO] GPT 보완 시작")
+            recipe_dict[row["요리이름"]] = {
+                "재료": parsed["재료"],
+                "조미료": parsed["조미료"]
+            }
+
+    # ✅ GPT 보완 로직 (15초 제한, 1개씩 누적 요청)
+    if len(recipe_dict) < MIN_RECIPE_COUNT:
+        print("[INFO] 추천 레시피가 부족하여 GPT로 보완 생성 시작")
         start_time = time.time()
-        while len(recipe_dict) < 5 and time.time() - start_time < 15:
+
+        while len(recipe_dict) < MIN_RECIPE_COUNT:
+            if time.time() - start_time > TIME_LIMIT_SECONDS:
+                print("[INFO] GPT 보완 시간 초과. 확보된 레시피까지만 사용")
+                break
+
             gpt_recipe = ask_gpt_for_single_recipe(보유_재료)
+
+            if not isinstance(gpt_recipe, dict):
+                print("[ERROR] GPT 응답이 dict가 아님")
+                break
+
             for name, data in gpt_recipe.items():
-                if name not in recipe_dict:
+                if name in recipe_dict:
+                    continue
+                if isinstance(data, dict) and "재료" in data and "조미료" in data:
                     recipe_dict[name] = data
-                    print(f"[GPT] '{name}' 추가됨")
-                    재료_텍스트 = ", ".join(f'{i["item"]} {i["amount"]}{i["unit"]}' for i in data["재료"] + data["조미료"])
-                    df = pd.concat([df, pd.DataFrame([{"요리이름": name, "재료": 재료_텍스트, "재료_JSON": json.dumps(data, ensure_ascii=False)}])], ignore_index=True)
-                if len(recipe_dict) >= 5:
+                    print(f"[INFO] GPT 레시피 '{name}' 추가됨")
+
+                    try:
+                        재료_텍스트 = ", ".join(
+                            [f'{i["item"]} {i["amount"]}{i["unit"]}' for i in data["재료"] + data["조미료"]]
+                        )
+                        재료_JSON = json.dumps(data, ensure_ascii=False)
+                        new_row = pd.DataFrame({
+                            "요리이름": [name],
+                            "재료": [재료_텍스트],
+                            "재료_JSON": [재료_JSON]
+                        })
+                        df = pd.concat([df, new_row], ignore_index=True)
+                    except Exception as e:
+                        print(f"[ERROR] GPT 레시피 저장 실패: {e}")
+
+                if len(recipe_dict) >= MIN_RECIPE_COUNT:
                     break
 
+    # ✅ CSV 저장
     if updated_indices or len(recipe_dict) > 0:
-        df.to_csv(CSV_PATH, index=False)
-        print(f"[INFO] recipes.csv 저장 완료 (총 {len(df)}개)")
+        df.to_csv(csv_path, index=False)
+        print(f"[INFO] recipes.csv 저장 완료 (총 {len(df)}개 레시피)")
 
-    print(f"[DEBUG] 추천 레시피 수: {len(recipe_dict)}")
+    print(f"[DEBUG] 총 추천 레시피 수: {len(recipe_dict)}")
     return recipe_dict
 
-# ===== 테스트 =====
+# ✅ 테스트 실행
 if __name__ == "__main__":
-<<<<<<< HEAD:run_recommendation.py
     test_in = ["감자", "양파"]
     result = run_recipe_recommendation(test_in)
     print(json.dumps(result, ensure_ascii=False, indent=2))
-=======
-    보유 = ["감자", "양파"]
-    결과 = run_recipe_recommendation(보유)
-    print(json.dumps(결과, ensure_ascii=False, indent=2))
->>>>>>> 2e243a9035d202c1a13dcdd7a7c2879b57092547:src/back2/decide_recommendation/api/run_recommendation.py
