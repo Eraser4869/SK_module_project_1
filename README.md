@@ -62,5 +62,5 @@ SK Module Project 1 - 4조
 <div align="center">
 ✨ 맛있고 건강한 AI 요리를 즐기세요! 🍳
 
-</div> ```
+</div> 
 
