@@ -71,7 +71,7 @@ def run_recipe_recommendation(보유_재료: list):
         parsed_light = extract_ingredient_info_light(row["재료"])
         레시피_재료 = [x["item"].strip() for x in parsed_light["재료"] if x["item"]]
 
-        is_In = all(
+        is_In = any(
             any(is_match(보유.strip(), r_item) for r_item in 레시피_재료)
             for 보유 in 보유_재료
         )
