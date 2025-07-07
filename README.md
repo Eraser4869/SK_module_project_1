@@ -31,20 +31,20 @@ SK Module Project 1 - 4조
 
 ## 🧠 시스템 구조
 
+```
 📦 SK_module_project_1
-│
 ├── 📁 data
-│
-├── 📄 crawling.py # 레시피 크롤러
-├── 📄 GPTAPI.py # GPT 기반 재료 추출
+├── 📄 crawling.py              # 레시피 크롤러
+├── 📄 GPTAPI.py               # GPT 기반 재료 추출
 ├── 📄 ai_classifier_multi_agent.py
 ├── 📄 cooking_time_model.py
-├── 📄 run_recommendation.py # 메인 추천 스크립트
+├── 📄 run_recommendation.py    # 메인 추천 스크립트
 ├── 📄 recipe_data_integrator.py
 ├── 📄 recipe_recommend.py
-├── 📄 Interface.py # 통합 실행용
+├── 📄 Interface.py             # 통합 실행용
 ├── 📄 nutrition_items.json / .pt / .pkl
 └── ...
+```
 
 ## 🧪 기술 스택
 🐍 Python 3.9.13
