@@ -125,6 +125,9 @@ MODEL_PATH=path/to/yolo/model.pt
 
 ```bash
 streamlit run Interface.py
+```
+
+
 
 ---
 
@@ -214,6 +217,7 @@ SK_module_project_1/
 | 레시피 데이터베이스 | 10,000+ 레시피 |
 
 ---
+
 
 <div align="center">
 
