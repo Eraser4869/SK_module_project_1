@@ -11,7 +11,7 @@
 
 > **🎬 시연 영상이 여기에 들어갑니다**
 > 
-> *시연 영상 링크: [🍽️ AI 맞춤 레시피 추천 시연](링크_주소)*
+> *시연 영상 링크: [🍽️ AI 맞춤 레시피 추천 시연](https://drive.google.com/file/d/16sKL3d7V4t_BGLQxdvJmwy0tUvJQD-ud/view?usp=sharing)*
 
 ---
 
