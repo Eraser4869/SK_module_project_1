@@ -125,9 +125,6 @@ MODEL_PATH=path/to/yolo/model.pt
 
 ```bash
 streamlit run Interface.py
-```
-
-브라우저에서 `http://localhost:8501`로 접속하세요.
 
 ---
 
@@ -215,51 +212,6 @@ SK_module_project_1/
 | 전체 처리 시간 | 10-30초 |
 | 지원 식재료 | 500+ 종류 |
 | 레시피 데이터베이스 | 10,000+ 레시피 |
-
----
-
-## 🔮 향후 계획
-
-### 🎯 **단기 목표 (1-3개월)**
-- [ ] 성능 최적화 및 응답 시간 단축
-- [ ] 에러 핸들링 강화
-- [ ] 사용자 피드백 시스템 구축
-
-### 🚀 **중기 목표 (3-6개월)**
-- [ ] 재료 매칭 정확도 95% 달성
-- [ ] 다국어 지원 확장
-- [ ] 세계 각국 요리 레시피 추가
-- [ ] 개인화 추천 알고리즘 고도화
-
-### 🌟 **장기 목표 (6개월+)**
-- [ ] 모바일 앱 개발 (React Native)
-- [ ] IoT 디바이스 연동 (스마트 냉장고, 오븐)
-- [ ] 식료품 자동 주문 시스템
-- [ ] 실시간 카메라 재료 인식
-
----
-
-## 🤝 기여하기
-
-1. 이 저장소를 Fork하세요
-2. Feature 브랜치를 생성하세요 (`git checkout -b feature/AmazingFeature`)
-3. 변경사항을 커밋하세요 (`git commit -m 'Add some AmazingFeature'`)
-4. 브랜치에 Push하세요 (`git push origin feature/AmazingFeature`)
-5. Pull Request를 생성하세요
-
----
-
-## 📞 문의
-
-**팀명**: 냉장고 나라 코코몽  
-**팀장**: 이지후  
-**GitHub**: [https://github.com/Eraser4869/SK_module_project_1](https://github.com/Eraser4869/SK_module_project_1)
-
----
-
-## 📄 라이선스
-
-이 프로젝트는 MIT 라이선스 하에 배포됩니다. 자세한 내용은 `LICENSE` 파일을 참조하세요.
 
 ---
 
